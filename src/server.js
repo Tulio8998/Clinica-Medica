@@ -1,40 +1,21 @@
 require('dotenv').config();
-const express = require("express");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const app = require('./app');
+const { connect } = require('./database'); 
 
-const app = express();
-app.use(express.json());
+const PORT = 3001;
 
-const uri = process.env.CONNECTIONSTRING;
-
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
-  }
-});
-
-async function startServer() {
+async function start() {
   try {
-    console.log("Tentando conectar...");
-    await client.connect();
+    await connect(); 
     
-    await client.db("admin").command({ ping: 1 });
-    console.log("Conectado com sucesso ao MongoDB");
-    
-    const db = client.db("ProntFlexDB"); 
-
-    app.listen(3000, () => {
-      console.log(`Servidor rodando na porta 3000`);
+    app.listen(PORT, () => {
+      console.log(`\nServidor online!`);
+      console.log(`Acesse: http://localhost:${PORT}`);
     });
 
   } catch (error) {
-    console.error("Erro ao conectar:");
-    console.error(error);
-    
-    process.exit(1);
+    console.error("Falha ao iniciar:", error);
   }
 }
 
-startServer();
+start();
