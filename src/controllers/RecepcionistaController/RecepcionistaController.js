@@ -6,7 +6,7 @@ module.exports = {
 
     async create(req, res) {
         try {
-            const { nome, cpf, email, senha , dataNasc, endereco, numero, turno } = req.body;
+            const { nome, cpf, email, senha , dataNasc, endereco, telefone, turno } = req.body;
             
             const erros = [];
             
@@ -31,7 +31,7 @@ module.exports = {
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
             if (!senha) erros.push("O campo 'senha' é obrigatório.");
             if (!endereco) erros.push("O campo 'endereço' é obrigatório.");
-            if (numero && typeof numero !== 'number') {
+            if (telefone && typeof telefone !== 'number') {
                 erros.push("Número inválido.");
             }
             if (dataNasc && typeof dataNasc !== 'number' && typeof dataNasc !== 'string') {
@@ -50,7 +50,7 @@ module.exports = {
                 senha,
                 dataNasc,
                 endereco,
-                numero,
+                telefone,
                 turno
             );
 

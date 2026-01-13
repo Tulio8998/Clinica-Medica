@@ -6,7 +6,7 @@ module.exports = {
 
     async create(req, res) {
         try {
-            const { nome, cpf, email, senha , dataNasc, endereco, numero, uf, crm, especialidade, descricao } = req.body;
+            const { nome, cpf, email, senha , dataNasc, endereco, telefone, uf, crm, especialidade, descricao } = req.body;
             
             const erros = [];
 
@@ -33,7 +33,7 @@ module.exports = {
             if (!especialidade) erros.push("O campo 'especialidade' é obrigatório.");
             if (!descricao) erros.push("O campo 'descricao' é obrigatório.");
             if (!endereco) erros.push("O campo 'endereço' é obrigatório.");
-            if (numero && typeof numero !== 'number') {
+            if (telefone && typeof telefone !== 'number') {
                 erros.push("Número inválido.");
             }
             if (dataNasc && typeof dataNasc !== 'number' && typeof dataNasc !== 'string') {
@@ -55,7 +55,7 @@ module.exports = {
                 senha,
                 dataNasc,
                 endereco,
-                numero,
+                telefone,
                 uf,
                 crm, 
                 especialidade, 
@@ -108,7 +108,7 @@ module.exports = {
 
     async update(req, res) {
         try {
-            const { nome, cpf, email, senha , dataNasc, endereco, numero, uf, crm, especialidade, descricao, id_recep, id_medic } = req.body;
+            const { nome, cpf, email, senha , dataNasc, endereco, telefone, uf, crm, especialidade, descricao, id_recep, id_medic } = req.body;
             const db = getDb();
             const medico = await db.collection('medicos').findOne({ 
                 _id: new ObjectId(id_medic) 
@@ -124,7 +124,7 @@ module.exports = {
             if (!especialidade) erros.push("O campo 'especialidade' é obrigatório.");
             if (!descricao) erros.push("O campo 'descricao' é obrigatório.");
             if (!endereco) erros.push("O campo 'endereço' é obrigatório.");
-            if (numero && typeof numero !== 'number') {
+            if (telefone && typeof telefone !== 'number') {
                 erros.push("Número inválido.");
             }
             if (dataNasc && typeof dataNasc !== 'number' && typeof dataNasc !== 'string') {
@@ -151,7 +151,7 @@ module.exports = {
                         senha,
                         dataNasc,
                         endereco,
-                        numero,
+                        telefone,
                         uf,
                         crm, 
                         especialidade, 

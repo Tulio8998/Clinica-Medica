@@ -6,7 +6,7 @@ module.exports = {
 
     async create(req, res) {
         try {
-            const { nome, cpf, email, senha , dataNasc, endereco, numero, uf, coren } = req.body;
+            const { nome, cpf, email, senha , dataNasc, endereco, telefone, uf, coren } = req.body;
             
             const erros = [];
             
@@ -29,7 +29,7 @@ module.exports = {
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
             if (!senha) erros.push("O campo 'senha' é obrigatório.");
             if (!endereco) erros.push("O campo 'endereço' é obrigatório.");
-            if (numero && typeof numero !== 'number') {
+            if (telefone && typeof telefone !== 'number') {
                 erros.push("Número inválido.");
             }
             if (dataNasc && typeof dataNasc !== 'number' && typeof dataNasc !== 'string') {
@@ -51,7 +51,7 @@ module.exports = {
                 senha,
                 dataNasc,
                 endereco,
-                numero,
+                telefone,
                 uf,
                 coren
             );
@@ -102,7 +102,7 @@ module.exports = {
 
     async update(req, res) {
         try {
-            const { nome, cpf, email, senha , dataNasc, endereco, numero, uf, coren, id_recep, id_enfer } = req.body;
+            const { nome, cpf, email, senha , dataNasc, endereco, telefone, uf, coren, id_recep, id_enfer } = req.body;
             const db = getDb();
             const enfermeiro = await db.collection('enfermeiros').findOne({ 
                 _id: new ObjectId(id_enfer) 
@@ -116,7 +116,7 @@ module.exports = {
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
             if (!senha) erros.push("O campo 'senha' é obrigatório.");
             if (!endereco) erros.push("O campo 'endereço' é obrigatório.");
-            if (numero && typeof numero !== 'number') {
+            if (telefone && typeof telefone !== 'number') {
                 erros.push("Número inválido.");
             }
             if (dataNasc && typeof dataNasc !== 'number' && typeof dataNasc !== 'string') {
@@ -143,7 +143,7 @@ module.exports = {
                         senha,
                         dataNasc,
                         endereco,
-                        numero,
+                        telefone,
                         uf,
                         coren
                     }
