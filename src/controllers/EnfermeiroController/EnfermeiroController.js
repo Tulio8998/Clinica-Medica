@@ -10,6 +10,21 @@ module.exports = {
             
             const erros = [];
             
+            const usuarioExistente = await db.collection('enfermeiros').findOne({
+                $or: [
+                    { cpf },
+                    { email }
+                ]
+            });
+            
+            if (usuarioExistente) {
+                if (usuarioExistente.cpf === cpf) {
+                    erros.push("O CPF já existe no sistema.");
+                }
+                if (usuarioExistente.email === email) {
+                    erros.push("O e-mail já existe no sistema.");
+                }
+            }
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
             if (!senha) erros.push("O campo 'senha' é obrigatório.");
@@ -41,7 +56,6 @@ module.exports = {
                 coren
             );
 
-            const db = getDb();
             const resultado = await db.collection('enfermeiros').insertOne(enfermeiro);
 
             res.status(201).json({

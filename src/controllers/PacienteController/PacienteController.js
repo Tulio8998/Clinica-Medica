@@ -9,7 +9,24 @@ module.exports = {
             const { nome, cpf, email, senha , dataNasc, endereco, numero, tipoSang } = req.body;
 
             const erros = [];
+
+            const db = getDb();
+
+            const usuarioExistente = await db.collection('pacientes').findOne({
+                $or: [
+                    { cpf },
+                    { email }
+                ]
+            });
             
+            if (usuarioExistente) {
+                if (usuarioExistente.cpf === cpf) {
+                    erros.push("O CPF já existe no sistema.");
+                }
+                if (usuarioExistente.email === email) {
+                    erros.push("O e-mail já existe no sistema.");
+                }
+            }
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!tipoSang) erros.push("O campo 'tipoSang' é obrigatório.");
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
@@ -37,7 +54,6 @@ module.exports = {
                 tipoSang
             );
 
-            const db = getDb();
             const resultado = await db.collection('pacientes').insertOne(paciente);
 
             res.status(201).json({

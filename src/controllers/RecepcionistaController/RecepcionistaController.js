@@ -10,6 +10,23 @@ module.exports = {
             
             const erros = [];
             
+            const db = getDb();
+            
+            const usuarioExistente = await db.collection('recepcionistas').findOne({
+                $or: [
+                    { cpf },
+                    { email }
+                ]
+            });
+            
+            if (usuarioExistente) {
+                if (usuarioExistente.cpf === cpf) {
+                    erros.push("O CPF já existe no sistema.");
+                }
+                if (usuarioExistente.email === email) {
+                    erros.push("O e-mail já existe no sistema.");
+                }
+            }
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
             if (!senha) erros.push("O campo 'senha' é obrigatório.");
@@ -37,7 +54,6 @@ module.exports = {
                 turno
             );
 
-            const db = getDb();
             const resultado = await db.collection('recepcionistas').insertOne(recepcionista);
 
             res.status(201).json({
