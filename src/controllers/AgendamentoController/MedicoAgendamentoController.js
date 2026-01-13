@@ -43,15 +43,18 @@ module.exports = {
     async update(req, res) {
         try {
             const { status, id_agend} = req.body;
+
+            const erros = [];
+            
+            if (!id_agend) return res.status(400).json({ erro: "ID da triagem é obrigatório." });
+
             const db = getDb();
             const agendamento = await db.collection('agendamentos').findOne({ 
                 _id: new ObjectId(id_agend) 
             });
 
-            const erros = [];
 
             if (status !== undefined && typeof status !== 'boolean') erros.push("O campo 'status' deve ser boolean.")
-            if (!id_agend) erros.push("O campo 'ID' do agendamento é obrigatório.");
             if (!agendamento) erros.push("Agendamento não encontrado");
             if (erros.length > 0) {
                 return res.status(400).json({ erros});

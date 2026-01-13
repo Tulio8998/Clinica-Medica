@@ -90,12 +90,16 @@ module.exports = {
     async update(req, res) {
         try {
             const { data, descricao, status, horario, id_agend } = req.body;
+            
+            const erros = [];
+            
+            if (!id_agend) return res.status(400).json({ erro: "ID da triagem é obrigatório." });
+            
             const db = getDb();
             const agendamento = await db.collection('agendamentos').findOne({ 
                 _id: new ObjectId(id_agend) 
             });
 
-            const erros = [];
 
             if (data && typeof data !== 'number' && typeof data !== 'string') {
                 erros.push("Data inválida")
@@ -105,7 +109,6 @@ module.exports = {
             }
             if (!descricao) erros.push("O campo 'descrição' é obrigatório.")
             if (status !== undefined && typeof status !== 'boolean') erros.push("O campo 'status' deve ser boolean.")
-            if (!id_agend) erros.push("O campo 'ID' do agendamento é obrigatório.");
             if (!agendamento) erros.push("Agendamento não encontrado");
             if (erros.length > 0) {
                 return res.status(400).json({ erros});
