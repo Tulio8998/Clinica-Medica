@@ -10,7 +10,7 @@ routes.post('/triagem/enfermeiro', authEnfer, enfermeiroController.create);
 routes.get('/triagem/enfermeiro', enfermeiroController.list);
 routes.get('/triagem/enfermeiro/buscar', enfermeiroController.select);
 routes.put('/triagem/enfermeiro', authEnfer, enfermeiroController.update);
-routes.delete('/triagem/enfermeiro', enfermeiroController.delete);
+routes.delete('/triagem/enfermeiro', authEnfer, enfermeiroController.delete);
 
 
 routes.get('/triagem/medico', medicoController.list);

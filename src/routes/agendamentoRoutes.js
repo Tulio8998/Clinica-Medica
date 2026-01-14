@@ -10,7 +10,7 @@ routes.post('/agendamento/recepcionista', authRecep, recepcionistaController.cre
 routes.get('/agendamento/recepcionista', recepcionistaController.list);
 routes.get('/agendamento/recepcionista/buscar', recepcionistaController.select);
 routes.put('/agendamento/recepcionista', authRecep, recepcionistaController.update);
-routes.delete('/agendamento/recepcionista', recepcionistaController.delete);
+routes.delete('/agendamento/recepcionista', authRecep, recepcionistaController.delete);
 
 
 routes.get('/agendamento/medico', medicoController.list);

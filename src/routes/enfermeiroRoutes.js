@@ -8,6 +8,6 @@ routes.post('/enfermeiros', EnfermeiroController.create);
 routes.get('/enfermeiros', EnfermeiroController.list);
 routes.get('/enfermeiros/buscar', EnfermeiroController.select);
 routes.put('/enfermeiros', authRecep, EnfermeiroController.update);
-routes.delete('/enfermeiros', EnfermeiroController.delete);
+routes.delete('/enfermeiros', authRecep, EnfermeiroController.delete);
 
 module.exports = routes;

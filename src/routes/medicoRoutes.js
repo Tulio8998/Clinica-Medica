@@ -7,6 +7,6 @@ routes.post('/medicos', MedicoController.create);
 routes.get('/medicos', MedicoController.list);
 routes.get('/medicos/buscar', MedicoController.select);
 routes.put('/medicos', authRecep, MedicoController.update);
-routes.delete('/medicos', MedicoController.delete);
+routes.delete('/medicos', authRecep, MedicoController.delete);
 
 module.exports = routes;
