@@ -1,31 +1,18 @@
 const Recepcionista = require('../../models/RecepcionistaModel');
-const { getDb } = require('../../database');
-const { ObjectId } = require('mongodb');
+const RecepcionistaRepo = require('../../repositories/RecepcionistaRepository');
 
 module.exports = {
 
     async create(req, res) {
         try {
             const { nome, cpf, email, senha , dataNasc, endereco, telefone, turno } = req.body;
-            
             const erros = [];
             
-            const db = getDb();
-            
-            const usuarioExistente = await db.collection('recepcionistas').findOne({
-                $or: [
-                    { cpf },
-                    { email }
-                ]
-            });
+            const usuarioExistente = await RecepcionistaRepo.findByCpfOrEmail(cpf, email);
             
             if (usuarioExistente) {
-                if (usuarioExistente.cpf === cpf) {
-                    erros.push("O CPF já existe no sistema.");
-                }
-                if (usuarioExistente.email === email) {
-                    erros.push("O e-mail já existe no sistema.");
-                }
+                if (usuarioExistente.cpf === cpf) erros.push("O CPF já existe no sistema.");
+                if (usuarioExistente.email === email) erros.push("O e-mail já existe no sistema.");
             }
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
@@ -54,7 +41,7 @@ module.exports = {
                 turno
             );
 
-            const resultado = await db.collection('recepcionistas').insertOne(recepcionista);
+            const resultado = await RecepcionistaRepo.create(recepcionista);
 
             res.status(201).json({
                 mensagem: "Recepcionista cadastrado!",
@@ -68,11 +55,8 @@ module.exports = {
 
     async list(req, res) {
         try {
-            const db = getDb();
-            
-            const recepcionistas = await db.collection('recepcionistas').find({}).toArray();
+            const recepcionistas = await RecepcionistaRepo.findAll();
             res.json(recepcionistas);
-
         } catch (error) {
             res.status(500).json({erro : error.message});
         }
@@ -81,18 +65,12 @@ module.exports = {
     async select(req, res) {
         try {
             const { id } = req.body;
-
             if (!id) return res.status(400).json({erro: "ID não encontrado"});
 
-            const db = getDb();
-            const recepcionista = await db.collection('recepcionistas').findOne({ 
-                _id: new ObjectId(id) 
-            });
-
+            const recepcionista = await RecepcionistaRepo.findById(id);
             if (!recepcionista) return res.status(404).json({erro: "Recepcionista não encontrado"});
 
             res.status(200).json(recepcionista);
-
         } catch (error) {
             res.status(500).json({erro : error.message});
         }
@@ -101,22 +79,15 @@ module.exports = {
     async delete(req, res) {
         try {
             const { id } = req.body;
-
             if (!id) return res.status(400).json({erro: "ID não encontrado"});
 
-            const db = getDb();
-            const resultado = await db.collection('recepcionistas').deleteOne({ 
-                _id: new ObjectId(id) 
-            });
+            const resultado = await RecepcionistaRepo.delete(id);
 
-            if (resultado.deletedCount === 0) {
+            if (!resultado || resultado.deletedCount === 0) {
                 return res.status(404).json({ erro: "Recepcionista não encontrado para deletar." });
             }
 
-            res.status(200).json({
-                mensagem: "Recepcionista deletado com sucesso!",
-            });
-            
+            res.status(200).json({ mensagem: "Recepcionista deletado com sucesso!" });
         } catch (error) {
             res.status(500).json({erro : error.message});
         }

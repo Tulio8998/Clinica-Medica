@@ -1,18 +1,14 @@
-const {getDb} = require('../../database');
-const { ObjectId } = require('mongodb');
+const AgendamentoRepo = require('../../repositories/AgendamentoRepository');
 
 module.exports = {
 
     async select(req, res) {
         try {
             const { id_agen } = req.body;
-
-            const db = getDb();
-            const agendamento = await db.collection('agendamentos').findOne({ 
-                _id: new ObjectId(id_agen) 
-            });
-            
             if (!id_agen) return res.status(400).json({erro: "ID não encontrado"});
+
+            const agendamento = await AgendamentoRepo.findById(id_agen);
+            
             if (!agendamento) return res.status(404).json({erro: "Agendamento não encontrado"});
             if (!agendamento.status) return res.status(200).json({erro : ('Agendamento já atendido.')});
 
@@ -25,15 +21,13 @@ module.exports = {
 
     async list(req, res) {
         try {
-            const db = getDb();
+            const agendamentos = await AgendamentoRepo.findPendentes();
 
-            const agendamento = await db.collection('agendamentos').find({status : true}).toArray();
-
-            if (agendamento.length === 0) {
-                 return res.status(200).json({ mensagem: 'Sem agendamentos  para atende' });
+            if (agendamentos.length === 0) {
+                 return res.status(200).json({ mensagem: 'Sem agendamentos para atender' });
             }
             
-            res.status(200).json(agendamento);
+            res.status(200).json(agendamentos);
 
         } catch (error) {
             res.status(500).json({erro : error.message});
@@ -43,40 +37,23 @@ module.exports = {
     async update(req, res) {
         try {
             const { status, id_agend} = req.body;
-
             const erros = [];
             
-            if (!id_agend) return res.status(400).json({ erro: "ID da triagem é obrigatório." });
+            if (!id_agend) return res.status(400).json({ erro: "ID do agendamento é obrigatório." });
 
-            const db = getDb();
-            const agendamento = await db.collection('agendamentos').findOne({ 
-                _id: new ObjectId(id_agend) 
-            });
-
+            const agendamento = await AgendamentoRepo.findById(id_agend);
 
             if (status !== undefined && typeof status !== 'boolean') erros.push("O campo 'status' deve ser boolean.")
             if (!agendamento) erros.push("Agendamento não encontrado");
-            if (erros.length > 0) {
-                return res.status(400).json({ erros});
-            }
+            
+            if (erros.length > 0) return res.status(400).json({ erros});
 
-            await db.collection('agendamentos').updateOne(
-                { _id: new ObjectId(id_agend) },
-                {
-                    $set: {
-                        status,
-                    }
-                }
-            );
+            await AgendamentoRepo.update(id_agend, { status });
 
-            res.status(200).json({
-                mensagem: "Agendamento atualizado!",
-            });
+            res.status(200).json({ mensagem: "Agendamento atualizado!" });
 
         } catch (error) {
             res.status(500).json({ erro: error.message});
         }
     }, 
-
-
 }

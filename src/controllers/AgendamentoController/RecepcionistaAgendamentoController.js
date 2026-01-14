@@ -1,6 +1,8 @@
 const Agendamento = require('../../models/AgendamentoModel')
-const {getDb} = require('../../database')
-const { ObjectId } = require('mongodb');
+const AgendamentoRepo = require('../../repositories/AgendamentoRepository');
+const MedicoRepo = require('../../repositories/MedicoRepository');
+const PacienteRepo = require('../../repositories/PacienteRepository');
+const { ObjectId } = require('mongodb'); 
 
 module.exports = {
 
@@ -23,29 +25,27 @@ module.exports = {
 
             if (erros.length > 0) return res.status(400).json({ erros });
 
-            const db = getDb();
-
-            const medico = await db.collection('medicos').findOne({ _id: new ObjectId(id_medic) });
-            const paciente = await db.collection('pacientes').findOne({ _id: new ObjectId(id_paci) });
+            const medico = await MedicoRepo.findById(id_medic);
+            const paciente = await PacienteRepo.findById(id_paci);
 
             if (!medico || !paciente) {
                 return res.status(404).json({ erro: "Médico ou Paciente não encontrados" });
             }
 
-            const agendamento = new Agendamento (
+            const agendamento = new Agendamento(
                 data,
                 descricao,
                 true,
                 horario,
-                new ObjectId(id_recep), 
-                new ObjectId(id_medic), 
-                new ObjectId(id_paci)  
-            )
+                new ObjectId(id_recep),
+                new ObjectId(id_medic),
+                new ObjectId(id_paci)
+            );
 
-            const resultado = await db.collection('agendamentos').insertOne(agendamento);
+            const resultado = await AgendamentoRepo.create(agendamento);
 
             res.status(201).json({
-                mensagem: "Agendamento realizado com sucesso!",
+                mensagem: "Agendamento realizado!",
                 id: resultado.insertedId
             });
 
@@ -57,49 +57,36 @@ module.exports = {
 
     async list(req, res) {
         try {
-            const db = getDb();
-
-            const agendamento = await db.collection('agendamentos').find({}).toArray();
-            res.json(agendamento)
-
+            const agendamentos = await AgendamentoRepo.findAll();
+            res.json(agendamentos);
         } catch (error) {
             res.status(500).json({ erro: error.message});
         }
     },
 
     async select(req, res) {
-        try {
-            const { id } = req.body;
-
-            if (!id) return res.status(400).json({erro: "ID não encontrado"});
-
-            const db = getDb();
-            const agendamento = await db.collection('agendamentos').findOne({ 
-                _id: new ObjectId(id) 
-            });
-
-            if (!agendamento) return res.status(404).json({erro: "Agendamento não encontrado"});
-
-            res.status(200).json(agendamento);
-
-        } catch (error) {
-            res.status(500).json({ erro: error.message});
-        }
-    }, 
+            try {
+                const { id } = req.body;
+                if (!id) return res.status(400).json({erro: "ID não encontrado"});
+    
+                const agendamento = await AgendamentoRepo.findById(id);
+                if (!agendamento) return res.status(404).json({erro: "Agendamento não encontrado"});
+    
+                res.status(200).json(agendamento);
+            } catch (error) {
+                res.status(500).json({erro : error.message});
+            }
+    },
+        
 
     async update(req, res) {
         try {
             const { data, descricao, status, horario, id_agend } = req.body;
-            
             const erros = [];
             
             if (!id_agend) return res.status(400).json({ erro: "ID da triagem é obrigatório." });
             
-            const db = getDb();
-            const agendamento = await db.collection('agendamentos').findOne({ 
-                _id: new ObjectId(id_agend) 
-            });
-
+            const agendamento = await AgendamentoRepo.findById(id_agend);
 
             if (data && typeof data !== 'number' && typeof data !== 'string') {
                 erros.push("Data inválida")
@@ -114,17 +101,14 @@ module.exports = {
                 return res.status(400).json({ erros});
             }
 
-            await db.collection('agendamentos').updateOne(
-                { _id: new ObjectId(id_agend) },
-                {
-                    $set: {
-                        data,
-                        horario,
-                        descricao,
-                        status,
-                    }
-                }
-            );
+            const dadosAtualizados = {
+                data,
+                horario,
+                descricao,
+                status
+            }
+
+            await AgendamentoRepo.update(id_agend, dadosAtualizados);
 
             res.status(200).json({
                 mensagem: "Agendamento atualizado!",
@@ -136,28 +120,20 @@ module.exports = {
     }, 
 
     async delete(req, res) {
-        try {
-            const { id } = req.body;
-
-            if (!id) return res.status(400).json({erro: "ID não encontrado"});
-
-            const db = getDb();
-            const resultado = await db.collection('agendamentos').deleteOne({ 
-                _id: new ObjectId(id) 
-            });
-
-            if (resultado.deletedCount === 0) {
-                return res.status(404).json({ erro: "Agendamento não encontrado para deletar." });
+            try {
+                const { id } = req.body;
+                if (!id) return res.status(400).json({erro: "ID não encontrado"});
+    
+                const resultado = await AgendamentoRepo.delete(id);
+                
+                if (!resultado || resultado.deletedCount === 0) {
+                    return res.status(404).json({ erro: "Agendamento não encontrado para deletar." });
+                }
+    
+                res.status(200).json({ mensagem: "Agendamento deletado com sucesso!" });
+            } catch (error) {
+                res.status(500).json({erro : error.message});
             }
-
-            res.status(200).json({
-                mensagem: "Agendamento deletado com sucesso!",
-            });
-
-
-        } catch (error) {
-            res.status(500).json({ erro: error.message});
         }
-    }
 
 }

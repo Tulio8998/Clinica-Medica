@@ -1,31 +1,20 @@
 const Paciente = require('../../models/PacienteModel');
-const { getDb } = require('../../database');
-const { ObjectId } = require('mongodb');
+const PacienteRepo = require('../../repositories/PacienteRepository');
+const RecepcionistaRepo = require('../../repositories/RecepcionistaRepository');
 
 module.exports = {
 
     async create(req, res) {
         try {
             const { nome, cpf, email, senha , dataNasc, endereco, telefone, tipoSang } = req.body;
-
+            
             const erros = [];
 
-            const db = getDb();
-
-            const usuarioExistente = await db.collection('pacientes').findOne({
-                $or: [
-                    { cpf },
-                    { email }
-                ]
-            });
+            const usuarioExistente = await PacienteRepo.findByCpfOrEmail(cpf, email);
             
             if (usuarioExistente) {
-                if (usuarioExistente.cpf === cpf) {
-                    erros.push("O CPF já existe no sistema.");
-                }
-                if (usuarioExistente.email === email) {
-                    erros.push("O e-mail já existe no sistema.");
-                }
+                if (usuarioExistente.cpf === cpf) erros.push("O CPF já existe no sistema.");
+                if (usuarioExistente.email === email) erros.push("O e-mail já existe no sistema.");
             }
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!tipoSang) erros.push("O campo 'tipoSang' é obrigatório.");
@@ -44,23 +33,22 @@ module.exports = {
             }
 
             const paciente = new Paciente(
-                nome,
-                cpf,
-                email,
-                senha,
-                dataNasc,
-                endereco,
-                telefone,
+                nome, 
+                cpf, 
+                email, 
+                senha, 
+                dataNasc, 
+                endereco, 
+                telefone, 
                 tipoSang
             );
 
-            const resultado = await db.collection('pacientes').insertOne(paciente);
+            const resultado = await PacienteRepo.create(paciente);
 
             res.status(201).json({
                 mensagem: "Paciente cadastrado!",
                 id_paci: resultado.insertedId
             });
-
         } catch (error) {
             res.status(500).json({ erro: error.message });
         }
@@ -68,11 +56,8 @@ module.exports = {
 
     async list(req, res) {
         try {
-            const db = getDb();
-            
-            const pacientes = await db.collection('pacientes').find({}).toArray();
+            const pacientes = await PacienteRepo.findAll();
             res.json(pacientes);
-
         } catch (error) {
             res.status(500).json({erro : error.message});
         }
@@ -81,18 +66,12 @@ module.exports = {
     async select(req, res) {
         try {
             const { id } = req.body;
-
             if (!id) return res.status(400).json({erro: "ID não encontrado"});
 
-            const db = getDb();
-            const paciente = await db.collection('pacientes').findOne({ 
-                _id: new ObjectId(id) 
-            });
-
+            const paciente = await PacienteRepo.findById(id);
             if (!paciente) return res.status(404).json({erro: "Paciente não encontrado"});
 
             res.status(200).json(paciente);
-
         } catch (error) {
             res.status(500).json({erro : error.message});
         }
@@ -101,15 +80,16 @@ module.exports = {
     async update(req, res) {
         try {
             const { nome, cpf, email, senha , dataNasc, endereco, telefone, tipoSang, id_recep, id_paci } = req.body;
-            const db = getDb();
-            const paciente = await db.collection('pacientes').findOne({ 
-                _id: new ObjectId(id_paci) 
-            });
-            const recepcionista = await db.collection('recepcionistas').findOne({ 
-                _id: new ObjectId(id_recep) 
-            });
             const erros = [];
 
+            if (!id_paci) return res.status(400).json({ erro: "ID do paciente obrigatório" });
+            if (!id_recep) return res.status(400).json({ erro: "ID do recepcionista obrigatório" });
+
+            const paciente = await PacienteRepo.findById(id_paci);
+            const recepcionista = await RecepcionistaRepo.findById(id_recep);
+
+            if (!paciente) erros.push("Paciente não encontrado");
+            if (!recepcionista) erros.push("Recepcionista não encontrada");
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!tipoSang) erros.push("O campo 'tipoSang' é obrigatório.");
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
@@ -122,32 +102,24 @@ module.exports = {
                 erros.push("Data de nascimento inválida.");
             }
             if (email && !email.includes('@')) erros.push("E-mail inválido.");
-            if (!paciente) erros.push("Paciente não encontrado");
-            if (!recepcionista) erros.push("Recepcionista não encontrado");
             if (erros.length > 0) {
                 return res.status(400).json({ erros });
             }
 
-            await db.collection('pacientes').updateOne(
-                { _id: new ObjectId(id_paci) },
-                {
-                    $set: {
-                        nome,
-                        cpf,
-                        email,
-                        senha,
-                        dataNasc,
-                        endereco,
-                        telefone,
-                        tipoSang
-                    }
-                }
-            );
+            const dadosAtualizados = { 
+                nome, 
+                cpf, 
+                email, 
+                senha, 
+                dataNasc, 
+                endereco, 
+                telefone, 
+                tipoSang 
+            };
 
-            res.status(200).json({
-                mensagem: "Paciente atualizado!",
-            });
+            await PacienteRepo.update(id_paci, dadosAtualizados);
 
+            res.status(200).json({ mensagem: "Paciente atualizado!" });
         } catch (error) {
             res.status(500).json({ erro: error.message});
         }
@@ -156,22 +128,15 @@ module.exports = {
     async delete(req, res) {
         try {
             const { id } = req.body;
-
             if (!id) return res.status(400).json({erro: "ID não encontrado"});
 
-            const db = getDb();
-            const resultado = await db.collection('pacientes').deleteOne({ 
-                _id: new ObjectId(id) 
-            });
-
-            if (resultado.deletedCount === 0) {
+            const resultado = await PacienteRepo.delete(id);
+            
+            if (!resultado || resultado.deletedCount === 0) {
                 return res.status(404).json({ erro: "Paciente não encontrado para deletar." });
             }
 
-            res.status(200).json({
-                mensagem: "Paciente deletado com sucesso!",
-            });
-            
+            res.status(200).json({ mensagem: "Paciente deletado com sucesso!" });
         } catch (error) {
             res.status(500).json({erro : error.message});
         }

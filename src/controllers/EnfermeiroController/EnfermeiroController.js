@@ -1,29 +1,19 @@
 const Enfermeiro = require('../../models/EnfermeiroModel');
-const { getDb } = require('../../database');
-const { ObjectId } = require('mongodb');
+const EnfermeiroRepo = require('../../repositories/EnfermeiroRepository');
+const RecepcionistaRepo = require('../../repositories/RecepcionistaRepository');
 
 module.exports = {
 
     async create(req, res) {
         try {
             const { nome, cpf, email, senha , dataNasc, endereco, telefone, uf, coren } = req.body;
-            
             const erros = [];
             
-            const usuarioExistente = await db.collection('enfermeiros').findOne({
-                $or: [
-                    { cpf },
-                    { email }
-                ]
-            });
+            const usuarioExistente = await EnfermeiroRepo.findByCpfOrEmail(cpf, email);
             
             if (usuarioExistente) {
-                if (usuarioExistente.cpf === cpf) {
-                    erros.push("O CPF já existe no sistema.");
-                }
-                if (usuarioExistente.email === email) {
-                    erros.push("O e-mail já existe no sistema.");
-                }
+                if (usuarioExistente.cpf === cpf) erros.push("O CPF já existe no sistema.");
+                if (usuarioExistente.email === email) erros.push("O e-mail já existe no sistema.");
             }
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
@@ -56,7 +46,7 @@ module.exports = {
                 coren
             );
 
-            const resultado = await db.collection('enfermeiros').insertOne(enfermeiro);
+            const resultado = await EnfermeiroRepo.create(enfermeiro);
 
             res.status(201).json({
                 mensagem: "Enfermeiro cadastrado!",
@@ -70,11 +60,8 @@ module.exports = {
 
     async list(req, res) {
         try {
-            const db = getDb();
-            
-            const enfermeiros = await db.collection('enfermeiros').find({}).toArray();
+            const enfermeiros = await EnfermeiroRepo.findAll();
             res.json(enfermeiros);
-
         } catch (error) {
             res.status(500).json({erro : error.message});
         }
@@ -83,18 +70,12 @@ module.exports = {
     async select(req, res) {
         try {
             const { id } = req.body;
-
             if (!id) return res.status(400).json({erro: "ID não encontrado"});
 
-            const db = getDb();
-            const enfermeiro = await db.collection('enfermeiros').findOne({ 
-                _id: new ObjectId(id) 
-            });
-
+            const enfermeiro = await EnfermeiroRepo.findById(id);
             if (!enfermeiro) return res.status(404).json({erro: "Enfermeiro não encontrado"});
 
             res.status(200).json(enfermeiro);
-
         } catch (error) {
             res.status(500).json({erro : error.message});
         }
@@ -103,15 +84,16 @@ module.exports = {
     async update(req, res) {
         try {
             const { nome, cpf, email, senha , dataNasc, endereco, telefone, uf, coren, id_recep, id_enfer } = req.body;
-            const db = getDb();
-            const enfermeiro = await db.collection('enfermeiros').findOne({ 
-                _id: new ObjectId(id_enfer) 
-            });
-            const recepcionista = await db.collection('recepcionistas').findOne({ 
-                _id: new ObjectId(id_recep) 
-            });
             const erros = [];
 
+            if (!id_enfer) return res.status(400).json({erro: "ID enfermeiro obrigatório"});
+            if (!id_recep) return res.status(400).json({erro: "ID recepcionista obrigatório"});
+
+            const enfermeiro = await EnfermeiroRepo.findById(id_enfer);
+            const recepcionista = await RecepcionistaRepo.findById(id_recep);
+
+            if (!enfermeiro) erros.push("Enfermeiro não encontrado");
+            if (!recepcionista) erros.push("Recepcionista não encontrado");
             if (!nome) erros.push("O campo 'nome' é obrigatório.");
             if (!cpf) erros.push("O campo 'cpf' é obrigatório.");
             if (!senha) erros.push("O campo 'senha' é obrigatório.");
@@ -127,32 +109,24 @@ module.exports = {
                 erros.push("COREN inválida.");
             }
             if (email && !email.includes('@')) erros.push("E-mail inválido.");
-            if (!enfermeiro) erros.push("Enfermeiro não encontrado");
-            if (!recepcionista) erros.push("Recepcionista não encontrado");
             if (erros.length > 0) {
                 return res.status(400).json({ erros });
             }
 
-            await db.collection('enfermeiros').updateOne(
-                { _id: new ObjectId(id_enfer) },
-                {
-                    $set: {
-                        nome,
-                        cpf,
-                        email,
-                        senha,
-                        dataNasc,
-                        endereco,
-                        telefone,
-                        uf,
-                        coren
-                    }
-                }
-            );
+            const dados = { 
+                nome, 
+                cpf, 
+                email, 
+                senha, 
+                dataNasc, 
+                endereco, 
+                telefone, 
+                uf, 
+                coren };
+            
+            await EnfermeiroRepo.update(id_enfer, dados);
 
-            res.status(200).json({
-                mensagem: "Enfermeiro atualizado!",
-            });
+            res.status(200).json({ mensagem: "Enfermeiro atualizado!" });
 
         } catch (error) {
             res.status(500).json({ erro: error.message});
@@ -162,22 +136,15 @@ module.exports = {
     async delete(req, res) {
         try {
             const { id } = req.body;
-
             if (!id) return res.status(400).json({erro: "ID não encontrado"});
 
-            const db = getDb();
-            const resultado = await db.collection('enfermeiros').deleteOne({ 
-                _id: new ObjectId(id) 
-            });
+            const resultado = await EnfermeiroRepo.delete(id);
 
-            if (resultado.deletedCount === 0) {
+            if (!resultado || resultado.deletedCount === 0) {
                 return res.status(404).json({ erro: "Enfermeiro não encontrado para deletar." });
             }
 
-            res.status(200).json({
-                mensagem: "Enfermeiro deletado com sucesso!",
-            });
-            
+            res.status(200).json({ mensagem: "Enfermeiro deletado com sucesso!" });
         } catch (error) {
             res.status(500).json({erro : error.message});
         }
