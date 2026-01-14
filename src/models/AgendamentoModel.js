@@ -7,6 +7,7 @@ class Agendamento {
         this.recep_id = id_recep;
         this.medic_id = id_medic;
         this.paci_id = id_paci;
+        this.data_criacao = new Date();
     }
 }
 
