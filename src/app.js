@@ -3,9 +3,14 @@ const pacienteRoutes = require('./routes/pacienteRoutes');
 const medicoRoutes = require('./routes/medicoRoutes');
 const enfermeiroRoutes = require('./routes/enfermeiroRoutes');
 const recepcionistaRoutes = require('./routes/recepcionistaRoutes');
-const agendamentoRoutes =  require('./routes/agendamentoRoutes')
+const agendamentoRoutes =  require('./routes/agendamentoRoutes');
 const authRoutes = require('./routes/authRoutes');
-const triagemRoutes =  require('./routes/triagemRoutes')
+const triagemRoutes =  require('./routes/triagemRoutes');
+const evolucaoRoutes = require('./routes/evolucaoRoutes');
+const receitaRoutes = require('./routes/receitaRoutes');
+const exameRoutes = require('./routes/examePedidoRoutes');
+const medicamentoRoutes = require('./routes/medicamentoRoutes');
+const dispensaRoutes = require('./routes/dispensaRoutes');
 
 class App {
   constructor() {
@@ -26,6 +31,11 @@ class App {
     this.server.use(agendamentoRoutes);
     this.server.use(authRoutes);
     this.server.use(triagemRoutes);
+    this.server.use(evolucaoRoutes);
+    this.server.use(receitaRoutes);
+    this.server.use(exameRoutes);
+    this.server.use(medicamentoRoutes);
+    this.server.use(dispensaRoutes);
   }
 }
 
