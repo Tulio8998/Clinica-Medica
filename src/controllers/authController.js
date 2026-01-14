@@ -1,4 +1,7 @@
-const { getDb } = require('../database');
+const MedicoRepo = require('../repositories/MedicoRepository');
+const PacienteRepo = require('../repositories/PacienteRepository');
+const EnfermeiroRepo = require('../repositories/EnfermeiroRepository');
+const RecepRepo = require('../repositories/RecepcionistaRepository');
 
 module.exports = {
     async login(req, res) {
@@ -9,35 +12,28 @@ module.exports = {
                 return res.status(400).json({ erro: "Email, senha e tipo são obrigatórios" });
             }
 
-            const db = getDb();
-            let collectionName = '';
+            let usuario = null;
 
             switch(tipo.toLowerCase()) {
                 case 'medico': 
-                    collectionName = 'medicos'; 
+                    usuario = await MedicoRepo.findByEmail(email);
                     break;
                 case 'paciente': 
-                    collectionName = 'pacientes'; 
+                    usuario = await PacienteRepo.findByEmail(email);
                     break;
                 case 'recepcionista': 
-                    collectionName = 'recepcionistas'; 
+                    usuario = await RecepRepo.findByEmail(email);
                     break;
                 case 'enfermeiro': 
-                    collectionName = 'enfermeiros'; 
+                    usuario = await EnfermeiroRepo.findByEmail(email);
                     break;
                 default: 
                     return res.status(400).json({ erro: "Tipo de usuário inválido" });
             }
 
-            const usuario = await db.collection(collectionName).findOne({ email });
-
-            if (!usuario) {
-                return res.status(401).json({ erro: "Usuário ou senha inválidos" });
-            }
-
-            if (usuario.senha !== senha) {
-                return res.status(401).json({ erro: "Usuário ou senha inválidos" });
-            }
+            if (!usuario) return res.status(401).json({ erro: "Usuário não encontrado" });
+            
+            if (usuario.senha !== senha) return res.status(401).json({ erro: "Senha incorreta" });
 
             const { senha: _, ...dadosUsuario } = usuario;
             
