@@ -1,10 +1,11 @@
 const { Router } = require('express');
 const DispensaController = require('../controllers/DispensaController/DispensaController');
-const authEnfer = require('../middlewares/authEnfermeiro'); // Apenas enfermagem audita
+const auth = require('../middlewares/auth');
+const authEnfer = require('../middlewares/authEnfermeiro');
 
 const routes = new Router();
 
-routes.get('/dispensas', DispensaController.list);
-routes.get('/dispensas/buscar', authEnfer, DispensaController.select);
+routes.get('/dispensas', auth, authEnfer, DispensaController.list);
+routes.get('/dispensas/buscar', auth, authEnfer, DispensaController.select);
 
 module.exports = routes;
