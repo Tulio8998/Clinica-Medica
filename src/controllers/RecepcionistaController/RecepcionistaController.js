@@ -41,6 +41,8 @@ module.exports = {
                 turno
             );
 
+            await recepcionista.hashPassword();
+
             const resultado = await RecepcionistaRepo.create(recepcionista);
 
             res.status(201).json({

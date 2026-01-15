@@ -49,7 +49,9 @@ module.exports = {
                 crm, 
                 especialidade, 
                 descricao
-            );
+            );  
+
+            await medico.hashPassword();
 
             const resultado = await MedicoRepo.create(medico);
 

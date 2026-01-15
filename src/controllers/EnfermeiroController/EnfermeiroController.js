@@ -46,6 +46,8 @@ module.exports = {
                 coren
             );
 
+            await enfermeiro.hashPassword();
+
             const resultado = await EnfermeiroRepo.create(enfermeiro);
 
             res.status(201).json({

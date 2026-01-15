@@ -43,6 +43,8 @@ module.exports = {
                 tipoSang
             );
 
+            await paciente.hashPassword();
+
             const resultado = await PacienteRepo.create(paciente);
 
             res.status(201).json({
