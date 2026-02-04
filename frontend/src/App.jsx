@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { AppProvider, useApp } from '@/app/context/AppContext';
-import { Login } from '@/app/components/Login';
-import { Sidebar, TopBar } from '@/app/components/Layout';
-import { ReceptionistDashboard } from '@/app/components/receptionist/Dashboard';
-import { UserManagement } from '@/app/components/receptionist/UserManagement';
-import { Scheduling } from '@/app/components/receptionist/Scheduling';
-import { TriagePage } from '@/app/components/nurse/TriagePage';
-import { PharmacyPage } from '@/app/components/nurse/PharmacyPage';
-import { DoctorQueue } from '@/app/components/doctor/DoctorQueue';
-import { ConsultationPage } from '@/app/components/doctor/ConsultationPage';
-import '@/styles/global.css';
-import '@/styles/App.css';
+import { AppProvider, useApp } from './context/AppContext.jsx';
+import { Login } from '../src/components/Login';
+import { Sidebar, TopBar } from '../src/components/Layout';
+import { ReceptionistDashboard } from '../src/components/receptionist/Dashboard';
+import { UserManagement } from '../src/components/receptionist/UserManagement';
+import { Scheduling } from '../src/components/receptionist/Scheduling';
+import { TriagePage } from '../src/components/nurse/TriagePage';
+import { PharmacyPage } from '../src/components/nurse/PharmacyPage';
+import { DoctorQueue } from '../src/components/doctor/DoctorQueue';
+import { ConsultationPage } from '../src/components/doctor/ConsultationPage';
+import '../src/styles/global.css';
+import '../src/styles/App.css';
 
 const AppContent = () => {
   const { currentUser } = useApp();

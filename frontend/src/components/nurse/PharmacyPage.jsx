@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../../context/AppContext.jsx';
 import { Plus, Pencil, Trash2, AlertTriangle, Package } from 'lucide-react';
-import '@/styles/Pharmacy.css';
+import '../../styles/Pharmacy.css';
 
 export const PharmacyPage = () => {
   const { medications, addMedication, updateMedication, deleteMedication } = useApp();

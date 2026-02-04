@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../context/AppContext.jsx';
 import { Activity } from 'lucide-react';
-import '@/styles/Login.css';
+import '../styles/Login.css';
 
 export const Login = () => {
   const { login } = useApp();

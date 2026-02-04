@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../../context/AppContext.jsx';
 import { Pencil, Trash2, Plus } from 'lucide-react';
-import '@/styles/UserManagement.css';
+import '../../styles/UserManagement.css';
 
 export const UserManagement = () => {
   const [activeTab, setActiveTab] = useState('patients');

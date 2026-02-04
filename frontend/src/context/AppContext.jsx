@@ -10,7 +10,7 @@ import {
   mockPrescriptions,
   mockExamRequests,
   mockMedicalRecords,
-} from '@/app/data/mockData';
+} from '../data/mockData';
 
 const AppContext = createContext(undefined);
 

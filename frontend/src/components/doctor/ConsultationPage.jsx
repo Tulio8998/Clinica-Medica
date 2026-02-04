@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../../context/AppContext.jsx';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
-import '@/styles/Consultation.css';
+import '../../styles/Consultation.css';
 
 export const ConsultationPage = ({ appointmentId, onBack }) => {
   const { appointments, patients, triages, addPrescription, addExamRequest, completeAppointment } = useApp();

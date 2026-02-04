@@ -1,7 +1,7 @@
 import React from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../../context/AppContext.jsx';
 import { Users, Clock, AlertCircle } from 'lucide-react';
-import '@/styles/DoctorQueue.css';
+import '../../styles/DoctorQueue.css'; 
 
 export const DoctorQueue = ({ onStartConsultation }) => {
   const { appointments, patients, triages, currentUser } = useApp();

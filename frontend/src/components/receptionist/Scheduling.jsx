@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../../context/AppContext.jsx';
 import { Plus, Trash2 } from 'lucide-react';
-import '@/styles/Scheduling.css';
+import '../../styles/Scheduling.css';
 
 export const Scheduling = () => {
   const { appointments, patients, doctors, addAppointment, deleteAppointment } = useApp();

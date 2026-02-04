@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../context/AppContext.jsx';
 import { 
   LayoutDashboard, 
   Users, 
@@ -12,7 +12,7 @@ import {
   Menu,
   X
 } from 'lucide-react';
-import '@/styles/Layout.css';
+import '../styles/Layout.css';
 
 export const Sidebar = ({ currentPage, onNavigate, isOpen, onClose }) => {
   const { currentUser, logout } = useApp();

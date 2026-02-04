@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../../context/AppContext.jsx';
 import { Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
-import '@/styles/Triage.css';
+import '../../styles/Triage.css';
 
 export const TriagePage = () => {
   const { appointments, patients, doctors, triages, addTriage } = useApp();

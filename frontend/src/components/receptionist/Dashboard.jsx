@@ -1,7 +1,7 @@
 import React from 'react';
-import { useApp } from '@/app/context/AppContext';
+import { useApp } from '../../context/AppContext.jsx';
 import { Users, Stethoscope, Calendar, TrendingUp } from 'lucide-react';
-import '@/styles/Dashboard.css';
+import '../../styles/Dashboard.css';
 
 export const ReceptionistDashboard = () => {
   const { patients, doctors, appointments } = useApp();
