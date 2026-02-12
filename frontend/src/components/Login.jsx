@@ -5,68 +5,87 @@ import '../styles/Login.css';
 
 export const Login = () => {
   const { login } = useApp();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('medico');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [erro, setErro] = useState('');
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
-      alert('Por favor, preencha todos os campos');
-      return;
-    }
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  setIsSubmitting(true);
+  setErro('');
 
-    const success = login(email, password, role);
-    if (success) {
-      console.log('Login realizado com sucesso!');
+  try {
+    const response = await fetch("http://localhost:3001/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email,
+        senha: password,
+        tipo: role 
+      })
+    });
+
+    // Se o status for 200, mas o JSON falhar, o erro cai no catch abaixo
+    const result = await response.json();
+    console.log("Resposta do Servidor:", result);
+
+    if (response.ok) {
+      const userData = {
+        nome: result.usuario.nome,
+        email: email,
+        role: role, 
+        token: result.token || ''
+      };
+
+      console.log("Fazendo login no contexto com:", userData);
+      login(userData); 
     } else {
-      alert('Credenciais inválidas');
+      setErro(result.erro || "Credenciais inválidas");
     }
-  };
+  } catch (error) {
+    console.error("Erro detalhado:", error);
+    setErro("Erro ao processar login. Verifique o console.");
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   return (
     <div className="login-container">
       <div className="card login-card">
-        <div className="login-header">
-          <div className="login-icon">
-            <Activity size={32} />
-          </div>
-          <div>
-            <h1 className="login-title">Sistema de Gestão Clínica</h1>
-            <p className="login-description">
-              Acesse sua conta para continuar
-            </p>
-          </div>
-        </div>
         <div className="login-content">
           <form onSubmit={handleSubmit} className="login-form">
+            {erro && <p style={{ color: 'red', marginBottom: '10px' }}>{erro}</p>}
+            
             <div className="login-form-group">
-              <label htmlFor="email" className="label">Email</label>
+              <label htmlFor="email">Email</label>
               <input
                 id="email"
                 type="email"
-                placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="input"
+                required
               />
             </div>
 
             <div className="login-form-group">
-              <label htmlFor="password" className="label">Senha</label>
+              <label htmlFor="password">Senha</label>
               <input
                 id="password"
                 type="password"
-                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="input"
+                required
               />
             </div>
 
             <div className="login-form-group">
-              <label htmlFor="role" className="label">Perfil de Acesso</label>
+              <label htmlFor="role">Perfil de Acesso</label>
               <select
                 id="role"
                 value={role}
@@ -80,14 +99,14 @@ export const Login = () => {
               </select>
             </div>
 
-            <button type="submit" className="btn btn-primary btn-full">
-              Entrar
+            <button 
+              type="submit" 
+              className="btn btn-primary btn-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
-
-          <div className="login-help-text">
-            <p>Utilize qualquer email e senha para demonstração</p>
-          </div>
         </div>
       </div>
     </div>

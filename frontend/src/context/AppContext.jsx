@@ -27,18 +27,23 @@ export const AppProvider = ({ children }) => {
   const [prescriptions, setPrescriptions] = useState(mockPrescriptions);
   const [examRequests, setExamRequests] = useState(mockExamRequests);
 
-  const login = (email, password, role) => {
-    // Simple mock authentication
-    if (email && password) {
-      setCurrentUser({
-        name: role === 'medico' ? 'Dr. Carlos Mendes' : role === 'enfermeiro' ? 'Fernanda Souza' : role === 'recepcionista' ? 'Julia Martins' : 'Administrador',
-        email,
-        role,
-      });
-      return true;
-    }
-    return false;
-  };
+  const login = (userData) => {
+  if (userData && userData.email) {
+    // Agora aceitamos o objeto que vem do Login.jsx
+    setCurrentUser({
+      name: userData.nome,
+      email: userData.email,
+      role: userData.role, // Aqui é onde o App.jsx decide a página
+      token: userData.token
+    });
+
+    // Salva no localStorage para não deslogar ao dar F5
+    localStorage.setItem('@Clinica:user', JSON.stringify(userData));
+    
+    return true;
+  }
+  return false;
+};
 
   const logout = () => {
     setCurrentUser(null);
