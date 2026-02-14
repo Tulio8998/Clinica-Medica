@@ -13,6 +13,7 @@ class Usuario {
         this.telefone = telefone;
         if(enderecoData) {
             this.endereco = new Endereco(
+                enderecoData.estado,
                 enderecoData.cidade,
                 enderecoData.bairro,
                 enderecoData.rua,
@@ -22,6 +23,21 @@ class Usuario {
         } else {
             this.endereco = null;
         }
+    }
+
+    static validarDadosUser(usuario) {
+        const erros = [];
+        
+        if (!usuario) { erros.push("O campo 'usuario' é obrigatório."); return erros; }
+        if (!usuario.nome) erros.push("O campo 'nome' é obrigatório.");
+        if (!usuario.cpf) erros.push("O campo 'cpf' é obrigatório.");
+        if (!usuario.email && !usuario.email.includes('@')) erros.push("E-mail inválido.");
+        if (!usuario.senha) erros.push("O campo 'senha' é obrigatório.");
+        if (!usuario.dataNasc && typeof dataNasc !== 'number' && typeof usuario.dataNasc !== 'string') {
+            erros.push("Data de nascimento inválida.");
+        }
+        if (!usuario.telefone && typeof usuario.telefone !== 'number') { erros.push("Telefone inválido.");}
+        return erros;
     }
 
     async hashPassword() {

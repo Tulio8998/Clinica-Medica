@@ -1,5 +1,6 @@
 class Endereco {
-    constructor(cidade, bairro, rua, cep, numero) {
+    constructor(estado, cidade, bairro, rua, cep, numero) {
+        this.estado = estado;
         this.cidade = cidade;
         this.bairro = bairro;
         this.rua = rua;
@@ -9,7 +10,9 @@ class Endereco {
 
     static validarEndereco(endereco) {
         const erros = [];
+        
         if (!endereco) { erros.push("O campo 'endereço' é obrigatório."); return erros; }
+        if (!endereco.estado) erros.push("O campo 'estado' é obrigatório.");
         if (!endereco.cidade) erros.push("O campo 'cidade' é obrigatório.");
         if (!endereco.bairro) erros.push("O campo 'bairro' é obrigatório.");
         if (!endereco.rua) erros.push("O campo 'rua' é obrigatório.");
