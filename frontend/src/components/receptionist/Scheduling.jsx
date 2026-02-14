@@ -18,8 +18,10 @@ export const Scheduling = () => {
 
 const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('token');
-    // Aqui você pode manter a lógica local se quiser que apareça na tela na hora
+    
+    const storedUser = localStorage.getItem('@Clinica:user');
+    const token = storedUser ? JSON.parse(storedUser).token : '';
+
     addAppointment(formData);
 
     try {
@@ -27,7 +29,7 @@ const handleSubmit = async (e) => {
         method: "POST",
         headers: { 
           "Content-Type": "application/json" ,
-          "Authorization": `${token}`
+          "Authorization": `Bearer ${token}` 
         },
         body: JSON.stringify(formData),
       });
@@ -37,15 +39,15 @@ const handleSubmit = async (e) => {
         setIsOpen(false);
         resetForm();
       } else {
-        alert('Erro ao salvar no banco de dados.');
+        const result = await response.json();
+        alert(`Erro ao salvar no banco de dados: ${result.erro || 'Desconhecido'}`);
       }
     } catch (error) {
       console.error("Erro na requisição:", error);
-      // Mesmo com erro no banco, limpamos o modal para o usuário não travar
       setIsOpen(false);
       resetForm();
     }
-  };
+};
   
 
 
