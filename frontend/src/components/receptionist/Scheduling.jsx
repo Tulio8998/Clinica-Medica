@@ -1,10 +1,34 @@
-import React, { useState } from 'react';
-import { useApp } from '../../context/AppContext.jsx';
+import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import '../../styles/Scheduling.css';
 
 export const Scheduling = () => {
-  const { appointments, patients, doctors, addAppointment, deleteAppointment } = useApp();
+  const [appointments, setAppointments] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+
+  const fetchData = async () => {
+    const storedUser = localStorage.getItem('@Clinica:user');
+    const token = storedUser ? JSON.parse(storedUser).token : '';
+    const headers = { 'Authorization': `Bearer ${token}` };
+
+    try {
+      const [aptRes, patRes, docRes] = await Promise.all([
+        fetch('http://localhost:3001/agendamento/recepcionista', { headers }),
+        fetch('http://localhost:3001/pacientes', { headers }),
+        fetch('http://localhost:3001/medicos', { headers })
+      ]);
+
+      if (aptRes.ok) setAppointments(await aptRes.json());
+      if (patRes.ok) setPatients(await patRes.json());
+      if (docRes.ok) setDoctors(await docRes.json());
+    } catch (error) {
+      console.error("Erro ao buscar dados:", error);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     patientId: '',
@@ -22,8 +46,6 @@ const handleSubmit = async (e) => {
     const storedUser = localStorage.getItem('@Clinica:user');
     const token = storedUser ? JSON.parse(storedUser).token : '';
 
-    addAppointment(formData);
-
     try {
       const response = await fetch("http://localhost:3001/agendamento/recepcionista", {
         method: "POST",
@@ -38,6 +60,7 @@ const handleSubmit = async (e) => {
         alert('Agendamento criado e salvo com sucesso!');
         setIsOpen(false);
         resetForm();
+        fetchData();
       } else {
         const result = await response.json();
         alert(`Erro ao salvar no banco de dados: ${result.erro || 'Desconhecido'}`);
@@ -63,10 +86,21 @@ const handleSubmit = async (e) => {
     });
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Tem certeza que deseja excluir este agendamento?')) {
-      deleteAppointment(id);
-      alert('Agendamento excluído com sucesso!');
+      const storedUser = localStorage.getItem('@Clinica:user');
+      const token = storedUser ? JSON.parse(storedUser).token : '';
+      try {
+        const response = await fetch("http://localhost:3001/agendamento/recepcionista", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+          body: JSON.stringify({ id }),
+        });
+        if (response.ok) {
+          alert('Agendamento excluído com sucesso!');
+          fetchData();
+        }
+      } catch (error) { console.error(error); }
     }
   };
 
@@ -115,16 +149,16 @@ const handleSubmit = async (e) => {
               </tr>
             ) : (
               sortedAppointments.map((appointment) => {
-                const patient = patients.find((p) => p.id === appointment.patientId);
-                const doctor = doctors.find((d) => d.id === appointment.doctorId);
+                const patient = patients.find((p) => p._id === appointment.id_paci);
+                const doctor = doctors.find((d) => d._id === appointment.id_medic);
                 return (
-                  <tr key={appointment.id}>
-                    <td>{patient?.name}</td>
-                    <td>{doctor?.name}</td>
+                  <tr key={appointment._id}>
+                    <td>{patient?.nome}</td>
+                    <td>{doctor?.nome}</td>
                     <td>
-                      {new Date(appointment.date).toLocaleDateString('pt-BR')}
+                      {appointment.data}
                     </td>
-                    <td>{appointment.time}</td>
+                    <td>{appointment.horario}</td>
                     <td>
                       <span className={`status-badge ${appointment.status === 'pendente' ? 'pending' : 'completed'}`}>
                         {appointment.status === 'pendente' ? 'Pendente' : 'Concluído'}
@@ -139,7 +173,7 @@ const handleSubmit = async (e) => {
                       <div className="table-actions">
                         <button
                           className="btn-ghost btn-icon btn-delete"
-                          onClick={() => handleDelete(appointment.id)}
+                          onClick={() => handleDelete(appointment._id)}
                           title="Excluir"
                         >
                           <Trash2 size={16} />
@@ -174,7 +208,7 @@ const handleSubmit = async (e) => {
                   >
                     <option value="">Selecione o paciente</option>
                     {patients.map((patient) => (
-                      <option key={patient.id} value={patient.id}>
+                      <option key={patient._id} value={patient._id}>
                         {patient.name}
                       </option>
                     ))}
@@ -191,7 +225,7 @@ const handleSubmit = async (e) => {
                   >
                     <option value="">Selecione o médico</option>
                     {doctors.map((doctor) => (
-                      <option key={doctor.id} value={doctor.id}>
+                      <option key={doctor._id} value={doctor._id}>
                         {doctor.name} - {doctor.specialty}
                       </option>
                     ))}
@@ -251,5 +285,3 @@ const handleSubmit = async (e) => {
   );
 
 };
-
-
