@@ -128,7 +128,7 @@ export const ReceptionistDashboard = () => {
               {patients.slice(0, 5).map((patient) => (
                 <div key={patient._id} className="patient-item">
                   <div className="patient-avatar">
-                    {patient?.name?.charAt(0) || '?'}
+                    {patient?.nome?.charAt(0) || '?'}
                   </div>
                   <div className="patient-info">
                     <p>{patient?.nome || 'Nome indisponível'}</p>
