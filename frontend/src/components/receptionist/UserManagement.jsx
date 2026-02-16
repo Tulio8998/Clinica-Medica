@@ -86,13 +86,21 @@ const PatientsTab = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
+    nome: '',
     cpf: '',
     email: '',
-    dateOfBirth: '',
-    phone: '',
-    address: '',
-    bloodType: 'O+',
+    senha: '', // Campo obrigatório, segundo o Model do tulio
+    dataNasc: '',
+    telefone: '',
+    tipoSang: 'O+',
+    endereco: {
+      estado: '',
+      cidade: '',
+      bairro: '',
+      rua: '',
+      cep: '',
+      numero: ''
+    }
   });
 
   const handleSubmit = async (e) => {
@@ -126,13 +134,21 @@ const PatientsTab = () => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
+      nome: '',
       cpf: '',
       email: '',
-      dateOfBirth: '',
-      phone: '',
-      address: '',
-      bloodType: 'O+',
+      senha: '',
+      dataNasc: '',
+      telefone: '',
+      tipoSang: 'O+',
+      endereco: {
+        estado: '',
+        cidade: '',
+        bairro: '',
+        rua: '',
+        cep: '',
+        numero: ''
+      }
     });
     setEditingPatient(null);
   };
@@ -235,83 +251,69 @@ const PatientsTab = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 <div className="form-group">
-                  <label htmlFor="name" className="label">Nome Completo</label>
-                  <input
-                    id="name"
-                    type="text"
-                    className="input"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    required
-                  />
+                  <label htmlFor="nome" className="label">Nome Completo</label>
+                  <input id="nome" type="text" className="input" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
                 </div>
                 <div className="form-group">
                   <label htmlFor="cpf" className="label">CPF</label>
-                  <input
-                    id="cpf"
-                    type="text"
-                    className="input"
-                    value={formData.cpf}
-                    onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-                    required
-                  />
+                  <input id="cpf" type="text" className="input" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} required />
                 </div>
                 <div className="form-group">
                   <label htmlFor="email" className="label">Email</label>
-                  <input
-                    id="email"
-                    type="email"
-                    className="input"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
-                  />
+                  <input id="email" type="email" className="input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="dateOfBirth" className="label">Data de Nascimento</label>
-                  <input
-                    id="dateOfBirth"
-                    type="date"
-                    className="input"
-                    value={formData.dateOfBirth}
-                    onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
-                    required
-                  />
+                  <label htmlFor="senha" className="label">Senha de Acesso</label>
+                  <input id="senha" type="password" className="input" value={formData.senha} onChange={(e) => setFormData({ ...formData, senha: e.target.value })} required={!editingPatient} placeholder={editingPatient ? 'Deixe em branco para não alterar' : ''} />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="phone" className="label">Telefone</label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    className="input"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    required
-                  />
+                  <label htmlFor="dataNasc" className="label">Data de Nascimento</label>
+                  <input id="dataNasc" type="date" className="input" value={formData.dataNasc} onChange={(e) => setFormData({ ...formData, dataNasc: e.target.value })} required />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="bloodType" className="label">Tipo Sanguíneo</label>
-                  <select
-                    id="bloodType"
-                    className="select"
-                    value={formData.bloodType}
-                    onChange={(e) => setFormData({ ...formData, bloodType: e.target.value })}
-                  >
+                  <label htmlFor="telefone" className="label">Telefone</label>
+                  <input id="telefone" type="tel" className="input" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="tipoSang" className="label">Tipo Sanguíneo</label>
+                  <select id="tipoSang" className="select" value={formData.tipoSang} onChange={(e) => setFormData({ ...formData, tipoSang: e.target.value })}>
                     {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map((type) => (
                       <option key={type} value={type}>{type}</option>
                     ))}
                   </select>
                 </div>
+                
+                {/* --- ENDEREÇO --- */}
                 <div className="form-group form-group-full">
-                  <label htmlFor="address" className="label">Endereço</label>
-                  <input
-                    id="address"
-                    type="text"
-                    className="input"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    required
-                  />
+                  <h3 style={{ marginBottom: '15px', color: '#1B5E20', fontSize: '16px', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>
+                    Endereço
+                  </h3>
+                  <div className="form-grid" style={{ marginTop: '10px' }}>
+                    <div className="form-group">
+                      <label htmlFor="cep" className="label">CEP</label>
+                      <input id="cep" type="text" className="input" value={formData.endereco.cep} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} required />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="estado" className="label">Estado (UF)</label>
+                      <input id="estado" type="text" className="input" maxLength="2" placeholder="Ex: MG" value={formData.endereco.estado} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} required />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="cidade" className="label">Cidade</label>
+                      <input id="cidade" type="text" className="input" value={formData.endereco.cidade} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} required />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="bairro" className="label">Bairro</label>
+                      <input id="bairro" type="text" className="input" value={formData.endereco.bairro} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} required />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="rua" className="label">Rua</label>
+                      <input id="rua" type="text" className="input" value={formData.endereco.rua} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} required />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="numero" className="label">Número</label>
+                      <input id="numero" type="text" className="input" value={formData.endereco.numero} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} required />
+                    </div>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
@@ -360,12 +362,24 @@ const DoctorsTab = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState(null);
   const [formData, setFormData] = useState({
-    name: '',
+    nome: '',
+    cpf: '',
+    email: '',
+    senha: '',
+    dataNasc: '',
+    telefone: '',
+    uf: '',
     crm: '',
-    specialty: '',
-    description: '',
-    phone: '',
-    address: '',
+    especialidade: '',
+    descricao: '',
+    endereco: { 
+      estado: '',
+      cidade: '',
+      bairro: '',
+      rua: '',
+      cep: '',
+      numero: ''
+    }
   });
 
   const handleSubmit = async (e) => {
@@ -399,12 +413,24 @@ const DoctorsTab = () => {
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      crm: '',
-      specialty: '',
-      description: '',
-      phone: '',
-      address: '',
+    nome: '',
+    cpf: '',
+    email: '',
+    senha: '',
+    dataNasc: '',
+    telefone: '',
+    uf: '',
+    crm: '',
+    especialidade: '',
+    descricao: '',
+    endereco: { 
+      estado: '',
+      cidade: '',
+      bairro: '',
+      rua: '',
+      cep: '',
+      numero: ''
+    }
     });
     setEditingDoctor(null);
   };
@@ -489,28 +515,57 @@ const DoctorsTab = () => {
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 <div className="form-group">
-                  <label htmlFor="name" className="label">Nome Completo</label>
-                  <input id="name" type="text" className="input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                  <label htmlFor="nome" className="label">Nome Completo</label>
+                  <input id="nome" type="text" className="input" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="cpf" className="label">CPF</label>
+                  <input id="cpf" type="text" className="input" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="email" className="label">Email</label>
+                  <input id="email" type="email" className="input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="senha" className="label">Senha</label>
+                  <input id="senha" type="password" className="input" value={formData.senha} onChange={(e) => setFormData({ ...formData, senha: e.target.value })} required={!editingDoctor} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="dataNasc" className="label">Data Nasc.</label>
+                  <input id="dataNasc" type="date" className="input" value={formData.dataNasc} onChange={(e) => setFormData({ ...formData, dataNasc: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="telefone" className="label">Telefone</label>
+                  <input id="telefone" type="tel" className="input" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="uf" className="label">UF (Conselho)</label>
+                  <input id="uf" type="text" className="input" maxLength="2" value={formData.uf} onChange={(e) => setFormData({ ...formData, uf: e.target.value })} required />
                 </div>
                 <div className="form-group">
                   <label htmlFor="crm" className="label">CRM</label>
                   <input id="crm" type="text" className="input" value={formData.crm} onChange={(e) => setFormData({ ...formData, crm: e.target.value })} required />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="specialty" className="label">Especialidade</label>
-                  <input id="specialty" type="text" className="input" value={formData.specialty} onChange={(e) => setFormData({ ...formData, specialty: e.target.value })} required />
+                  <label htmlFor="especialidade" className="label">Especialidade</label>
+                  <input id="especialidade" type="text" className="input" value={formData.especialidade} onChange={(e) => setFormData({ ...formData, especialidade: e.target.value })} required />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="phone" className="label">Telefone</label>
-                  <input id="phone" type="tel" className="input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
+                  <label htmlFor="descricao" className="label">Descrição</label>
+                  <input id="descricao" type="text" className="input" value={formData.descricao} onChange={(e) => setFormData({ ...formData, descricao: e.target.value })} />
                 </div>
+
+                {/* ENDEREÇO (Igual para todos) */}
                 <div className="form-group form-group-full">
-                  <label htmlFor="description" className="label">Descrição</label>
-                  <input id="description" type="text" className="input" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-                </div>
-                <div className="form-group form-group-full">
-                  <label htmlFor="address" className="label">Endereço</label>
-                  <input id="address" type="text" className="input" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} required />
+                  <h3 style={{ marginBottom: '15px', color: '#1B5E20', fontSize: '16px', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>Endereço</h3>
+                  <div className="form-grid" style={{ marginTop: '10px' }}>
+                    <div className="form-group"><label className="label">CEP</label><input type="text" className="input" value={formData.endereco.cep} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Estado (UF)</label><input type="text" className="input" maxLength="2" placeholder="Ex: MG" value={formData.endereco.estado} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Cidade</label><input type="text" className="input" value={formData.endereco.cidade} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Bairro</label><input type="text" className="input" value={formData.endereco.bairro} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Rua</label><input type="text" className="input" value={formData.endereco.rua} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Número</label><input type="text" className="input" value={formData.endereco.numero} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} required /></div>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
@@ -550,7 +605,24 @@ const NursesTab = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingNurse, setEditingNurse] = useState(null);
-  const [formData, setFormData] = useState({ name: '', coren: '', phone: '', address: '' });
+  const [formData, setFormData] = useState({
+    nome: '',
+    cpf: '',
+    email: '',
+    senha: '',
+    dataNasc: '',
+    telefone: '',
+    uf: '',
+    coren: '',
+    endereco: { 
+      estado: '',
+      cidade: '',
+      bairro: '',
+      rua: '',
+      cep: '',
+      numero: ''
+    }
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -582,7 +654,24 @@ const NursesTab = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', coren: '', phone: '', address: '' });
+    setFormData({ 
+      nome: '',
+      cpf: '',
+      email: '',
+      senha: '',
+      dataNasc: '',
+      telefone: '',
+      uf: '',
+      coren: '',
+      endereco: {
+        estado: '',
+        cidade: '',
+        bairro: '',
+        rua: '',
+        cep: '',
+        numero: ''
+      }
+    });
     setEditingNurse(null);
   };
 
@@ -665,21 +754,29 @@ const NursesTab = () => {
           <div className="modal-body">
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="name" className="label">Nome Completo</label>
-                  <input id="name" type="text" className="input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="coren" className="label">COREN</label>
-                  <input id="coren" type="text" className="input" value={formData.coren} onChange={(e) => setFormData({ ...formData, coren: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="phone" className="label">Telefone</label>
-                  <input id="phone" type="tel" className="input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
-                </div>
+                {/* CAMPOS BASE DA CLASSE USUARIO */}
+                <div className="form-group"><label className="label">Nome Completo</label><input type="text" className="input" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">CPF</label><input type="text" className="input" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">Email</label><input type="email" className="input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">Senha</label><input type="password" className="input" value={formData.senha} onChange={(e) => setFormData({ ...formData, senha: e.target.value })} required={!editingNurse} /></div>
+                <div className="form-group"><label className="label">Data Nasc.</label><input type="date" className="input" value={formData.dataNasc} onChange={(e) => setFormData({ ...formData, dataNasc: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">Telefone</label><input type="tel" className="input" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} required /></div>
+                
+                {/* CAMPOS ESPECÍFICOS ENFERMEIRO */}
+                <div className="form-group"><label className="label">UF (Conselho)</label><input type="text" className="input" maxLength="2" value={formData.uf} onChange={(e) => setFormData({ ...formData, uf: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">COREN</label><input type="text" className="input" value={formData.coren} onChange={(e) => setFormData({ ...formData, coren: e.target.value })} required /></div>
+
+                {/* ENDEREÇO */}
                 <div className="form-group form-group-full">
-                  <label htmlFor="address" className="label">Endereço</label>
-                  <input id="address" type="text" className="input" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} required />
+                  <h3 style={{ marginBottom: '15px', color: '#1B5E20', fontSize: '16px', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>Endereço</h3>
+                  <div className="form-grid" style={{ marginTop: '10px' }}>
+                    <div className="form-group"><label className="label">CEP</label><input type="text" className="input" value={formData.endereco.cep} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Estado (UF)</label><input type="text" className="input" maxLength="2" placeholder='Ex: MG' value={formData.endereco.estado} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Cidade</label><input type="text" className="input" value={formData.endereco.cidade} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Bairro</label><input type="text" className="input" value={formData.endereco.bairro} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Rua</label><input type="text" className="input" value={formData.endereco.rua} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Número</label><input type="text" className="input" value={formData.endereco.numero} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} required /></div>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
@@ -719,7 +816,23 @@ const ReceptionistsTab = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [editingReceptionist, setEditingReceptionist] = useState(null);
-  const [formData, setFormData] = useState({ name: '', cpf: '', phone: '', address: '' });
+  const [formData, setFormData] = useState({
+    nome: '',
+    cpf: '',
+    email: '',
+    senha: '',
+    dataNasc: '',
+    telefone: '',
+    turno: 'Manhã', // Valor padrão para o select
+    endereco: {
+      estado: '',
+      cidade: '',
+      bairro: '',
+      rua: '',
+      cep: '',
+      numero: ''
+    }
+  });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -751,7 +864,23 @@ const ReceptionistsTab = () => {
   };
 
   const resetForm = () => {
-    setFormData({ name: '', cpf: '', phone: '', address: '' });
+    setFormData({
+      nome: '',
+      cpf: '',
+      email: '',
+      senha: '',
+      dataNasc: '',
+      telefone: '',
+      turno: 'Manhã',
+      endereco: {
+        estado: '',
+        cidade: '',
+        bairro: '',
+        rua: '',
+        cep: '',
+        numero: ''
+      }
+    });
     setEditingReceptionist(null);
   };
 
@@ -834,21 +963,35 @@ const ReceptionistsTab = () => {
           <div className="modal-body">
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
+                {/* CAMPOS BASE DA CLASSE USUARIO */}
+                <div className="form-group"><label className="label">Nome Completo</label><input type="text" className="input" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">CPF</label><input type="text" className="input" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">Email</label><input type="email" className="input" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">Senha</label><input type="password" className="input" value={formData.senha} onChange={(e) => setFormData({ ...formData, senha: e.target.value })} required={!editingReceptionist} /></div>
+                <div className="form-group"><label className="label">Data Nasc.</label><input type="date" className="input" value={formData.dataNasc} onChange={(e) => setFormData({ ...formData, dataNasc: e.target.value })} required /></div>
+                <div className="form-group"><label className="label">Telefone</label><input type="tel" className="input" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} required /></div>
+                
+                {/* CAMPOS ESPECÍFICOS RECEPCIONISTA */}
                 <div className="form-group">
-                  <label htmlFor="name" className="label">Nome Completo</label>
-                  <input id="name" type="text" className="input" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                  <label className="label">Turno</label>
+                  <select className="select" value={formData.turno} onChange={(e) => setFormData({ ...formData, turno: e.target.value })}>
+                    <option value="Manhã">Manhã</option>
+                    <option value="Tarde">Tarde</option>
+                    <option value="Noite">Noite</option>
+                  </select>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="cpf" className="label">CPF</label>
-                  <input id="cpf" type="text" className="input" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} required />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="phone" className="label">Telefone</label>
-                  <input id="phone" type="tel" className="input" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} required />
-                </div>
+
+                {/* ENDEREÇO */}
                 <div className="form-group form-group-full">
-                  <label htmlFor="address" className="label">Endereço</label>
-                  <input id="address" type="text" className="input" value={formData.address} onChange={(e) => setFormData({ ...formData, address: e.target.value })} required />
+                  <h3 style={{ marginBottom: '15px', color: '#1B5E20', fontSize: '16px', borderBottom: '1px solid #ccc', paddingBottom: '5px' }}>Endereço</h3>
+                  <div className="form-grid" style={{ marginTop: '10px' }}>
+                    <div className="form-group"><label className="label">CEP</label><input type="text" className="input" value={formData.endereco.cep} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cep: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Estado (UF)</label><input type="text" className="input" maxLength="2" placeholder='Ex: MG' value={formData.endereco.estado} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, estado: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Cidade</label><input type="text" className="input" value={formData.endereco.cidade} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, cidade: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Bairro</label><input type="text" className="input" value={formData.endereco.bairro} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, bairro: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Rua</label><input type="text" className="input" value={formData.endereco.rua} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, rua: e.target.value } })} required /></div>
+                    <div className="form-group"><label className="label">Número</label><input type="text" className="input" value={formData.endereco.numero} onChange={(e) => setFormData({ ...formData, endereco: { ...formData.endereco, numero: e.target.value } })} required /></div>
+                  </div>
                 </div>
               </div>
               <div className="modal-footer">
