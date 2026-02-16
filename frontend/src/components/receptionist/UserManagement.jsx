@@ -580,6 +580,9 @@ const DoctorsTab = () => {
   );
 };
 
+
+
+
 const NursesTab = () => {
   const [nurses, setNurses] = useState([]);
 
@@ -630,25 +633,31 @@ const NursesTab = () => {
     const token = storedUser ? JSON.parse(storedUser).token : '';
     const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
 
+    // Pacote com a "gambiarra" para o backend da enfermeira aceitar
+    const payload = {
+      ...formData,
+      telefone: Number(formData.telefone),
+      coren: Number(formData.coren)
+    };
+
     try {
       if (editingNurse) {
         const response = await fetch('http://localhost:3001/enfermeiros', {
           method: 'PUT',
           headers,
-          body: JSON.stringify({ ...formData, id: editingNurse._id })
+          body: JSON.stringify({ ...payload, id: editingNurse._id })
         });
         if (response.ok) alert('Enfermeiro atualizado com sucesso!');
       } else {
         const response = await fetch('http://localhost:3001/enfermeiros', {
           method: 'POST',
           headers,
-          body: JSON.stringify(formData)
+          body: JSON.stringify(payload)
         });
         if (response.ok) alert('Enfermeiro cadastrado com sucesso!');
       }
       fetchNurses();
-    }
-    catch (error) { console.error(error); }
+    } catch (error) { console.error(error); }
     setIsOpen(false);
     resetForm();
   };
