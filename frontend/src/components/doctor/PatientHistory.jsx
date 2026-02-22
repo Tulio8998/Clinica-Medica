@@ -24,43 +24,41 @@ export const PatientHistory = () => {
   }, []);
 
   const handleSelectPatient = async (patient) => {
-  setLoading(true);
-  setSelectedPatient(patient);
-  
-  // LOG 1: Ver qual ID estamos procurando
-  const pId = (patient._id || patient.id)?.toString();
-  console.log("🔎 Buscando histórico para o Paciente ID:", pId);
-
-  try {
-    const storedUser = localStorage.getItem('@Clinica:user');
-    const token = storedUser ? JSON.parse(storedUser).token : '';
+    setLoading(true);
+    setSelectedPatient(patient); 
     
-    const res = await fetch('http://localhost:3001/evolucao', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    
-    if (res.ok) {
-        const allEvos = await res.json();
-        const pId = String(selectedPatient?._id || selectedPatient?.id);
+    // Pegamos o ID direto do parâmetro 'patient' que acabou de chegar
+    const pId = String(patient._id || patient.id);
+    console.log("🔎 Buscando histórico para o Paciente ID:", pId);
 
-        console.log("🔍 Filtrando evoluções para o Paciente String ID:", pId);
-
-        const filtered = allEvos.filter(e => {
-          // Garante a comparação entre Strings puras
-          const evoPaciId = String(e.id_paci || e.paciente_id || e.id_paciente || '');
-          return evoPaciId === pId;
-        });
-
-        console.log("✅ Evoluções após o filtro:", filtered);
-        setEvolutions(filtered);
-      }
+    try {
+      const storedUser = localStorage.getItem('@Clinica:user');
+      const token = storedUser ? JSON.parse(storedUser).token : '';
       
-  } catch (error) {
-    console.error("❌ Erro na requisição:", error);
-  } finally {
-    setLoading(false);
-  }
-};
+      const res = await fetch('http://localhost:3001/evolucao', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+          const allEvos = await res.json();
+
+          console.log("🔍 Filtrando evoluções para o Paciente String ID:", pId);
+
+          const filtered = allEvos.filter(e => {
+            const evoPaciId = String(e.id_paci || e.paciente_id || e.id_paciente || '');
+            return evoPaciId === pId;
+          });
+
+          console.log("✅ Evoluções após o filtro:", filtered);
+          setEvolutions(filtered);
+        }
+        
+    } catch (error) {
+      console.error("❌ Erro na requisição:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="history-container">
