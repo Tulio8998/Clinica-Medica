@@ -10,7 +10,8 @@ import {
   ClipboardList,
   LogOut,
   Menu,
-  X
+  X,
+  Search
 } from 'lucide-react';
 import '../styles/Layout.css';
 
@@ -39,6 +40,7 @@ export const Sidebar = ({ currentPage, onNavigate, isOpen, onClose }) => {
       return [
         { id: 'queue', label: 'Fila de Atendimento', icon: ClipboardList },
         { id: 'consultation', label: 'Consulta', icon: Stethoscope },
+        { id: 'history', label: 'Histórico de Pacientes', icon: Search },
       ];
     }
 

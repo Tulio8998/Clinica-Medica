@@ -1,139 +1,165 @@
-import React, { useState } from 'react';
-import { useApp } from '../../context/AppContext.jsx';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import '../../styles/Consultation.css';
 
 export const ConsultationPage = ({ appointmentId, onBack }) => {
-  const { appointments, patients, triages, addPrescription, addExamRequest, completeAppointment } = useApp();
-  
-  const appointment = appointments.find((apt) => apt.id === appointmentId);
-  const patient = patients.find((p) => p.id === appointment?.patientId);
-  const triage = triages.find((t) => t.appointmentId === appointmentId);
+  const [appointment, setAppointment] = useState(null);
+  const [patient, setPatient] = useState(null);
+  const [triage, setTriage] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const [diagnosis, setDiagnosis] = useState('');
-  const [treatmentPlan, setTreatmentPlan] = useState('');
+  // Estados baseados no EvolucaoController do seu amigo
+  const [resumo, setResumo] = useState('');
+  const [cidPrin, setCidPrin] = useState('');
+  const [cidSecun, setCidSecun] = useState('');
   const [prescriptions, setPrescriptions] = useState([]);
-  const [exams, setExams] = useState([]);
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
-  const [showExamForm, setShowExamForm] = useState(false);
 
   const [prescriptionForm, setPrescriptionForm] = useState({
-    medication: '',
-    dosage: '',
-    frequency: '',
-    duration: '',
-    instructions: '',
+    medication: '', dosage: '', frequency: '', duration: '', instructions: '',
   });
 
-  const [examForm, setExamForm] = useState({
-    examType: '',
-    reason: '',
-  });
+  useEffect(() => {
+    const fetchConsultationData = async () => {
+      try {
+        const storedUser = localStorage.getItem('@Clinica:user');
+        const token = storedUser ? JSON.parse(storedUser).token : '';
+        const headers = { 'Authorization': `Bearer ${token}` };
 
-  const handleAddPrescription = (e) => {
-    e.preventDefault();
-    setPrescriptions([...prescriptions, { ...prescriptionForm, id: Date.now() }]);
-    setPrescriptionForm({
-      medication: '',
-      dosage: '',
-      frequency: '',
-      duration: '',
-      instructions: '',
+        const resApt = await fetch('http://localhost:3001/agendamento/medico', { headers });
+        if (resApt.ok) {
+          const apts = await resApt.json();
+          const currentApt = apts.find(a => (a.id || a._id) === appointmentId);
+          setAppointment(currentApt);
+
+          if (currentApt) {
+            const patientId = currentApt.id_paci || currentApt.paciente_id;
+            const resPac = await fetch('http://localhost:3001/pacientes', { headers });
+            if (resPac.ok) {
+              const pacs = await resPac.json();
+              setPatient(pacs.find(p => (p.id || p._id) === patientId));
+            }
+
+            const resTri = await fetch('http://localhost:3001/triagem/medico', { headers });
+            if (resTri.ok) {
+              const tris = await resTri.json();
+              setTriage(tris.find(t => (t.id_agen || t.id_agend) === appointmentId));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchConsultationData();
+  }, [appointmentId]);
+
+  const handleCompleteConsultation = async () => {
+    // 1. PRIMEIRO criamos as variáveis e pegamos o usuário logado
+    const storedUser = localStorage.getItem('@Clinica:user');
+    const userObj = storedUser ? JSON.parse(storedUser) : null;
+    const token = userObj?.token || '';
+    const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+
+    // 2. AGORA sim podemos usar o userObj no console.log sem dar erro
+    console.log("🚀 Tentando salvar evolução com os dados:", {
+        resumo,
+        cid_prin: cidPrin,
+        id_medic: userObj?.id || userObj?._id,
+        id_paci: patient?._id || patient?.id
     });
-    setShowPrescriptionForm(false);
-  };
+    
+    // 3. Validação dos campos
+    if (!resumo || !cidPrin) return alert('Resumo e CID Principal são obrigatórios!');
 
-  const handleRemovePrescription = (id) => {
-    setPrescriptions(prescriptions.filter((p) => p.id !== id));
-  };
+    try {
+      // 4. Salvar Evolução
+      const evolucaoPayload = {
+        resumo,
+        cid_prin: cidPrin,
+        cid_secun: cidSecun || 'N/A',
+        id_medic: userObj?.id || userObj?._id,
+        id_paci: patient?._id || patient?.id
+      };
 
-  const handleAddExam = (e) => {
-    e.preventDefault();
-    setExams([...exams, { ...examForm, id: Date.now() }]);
-    setExamForm({ examType: '', reason: '' });
-    setShowExamForm(false);
-  };
+      const resEvo = await fetch('http://localhost:3001/evolucao', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(evolucaoPayload)
+      });
 
-  const handleRemoveExam = (id) => {
-    setExams(exams.filter((e) => e.id !== id));
-  };
+      if (!resEvo.ok) {
+        const err = await resEvo.json();
+        throw new Error(err.erros ? err.erros.join(', ') : 'Erro ao salvar evolução');
+      }
 
-  const handleCompleteConsultation = () => {
-    if (!diagnosis || !treatmentPlan) {
-      alert('Por favor, preencha o diagnóstico e plano de tratamento');
-      return;
+      // 5. Salvar Prescrições
+      for (const rx of prescriptions) {
+        await fetch('http://localhost:3001/receita', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            id_agend: appointmentId,
+            medicamento: rx.medication,
+            dosagem: rx.dosage,
+            frequencia: rx.frequency,
+            duracao: rx.duration,
+            instrucoes: rx.instructions
+          })
+        });
+      }
+
+      // 6. Finalizar Agendamento (Muda o status para true!)
+      await fetch('http://localhost:3001/agendamento/medico', {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ id_agend: appointmentId, status: true })
+      });
+
+      alert('Consulta finalizada com sucesso!');
+      onBack(); // Volta pra tela de fila
+    } catch (error) {
+      alert(`Erro: ${error.message}`);
     }
-
-    // Save prescriptions
-    prescriptions.forEach((prescription) => {
-      addPrescription({ appointmentId, patientId: patient.id, ...prescription });
-    });
-
-    // Save exam requests
-    exams.forEach((exam) => {
-      addExamRequest({ appointmentId, patientId: patient.id, ...exam });
-    });
-
-    // Complete appointment
-    completeAppointment(appointmentId, { diagnosis, treatmentPlan });
-
-    alert('Consulta finalizada com sucesso!');
-    onBack();
   };
 
-  if (!appointment || !patient) {
-    return (
-      <div className="card">
-        <div className="card-content">
-          <p className="empty-state">Consulta não encontrada</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="p-4">Carregando consulta...</div>;
 
   return (
     <div className="consultation-container">
       <div className="consultation-header">
         <div className="consultation-header-content">
-          <h1>Consulta - {patient.name}</h1>
-          <p>CPF: {patient.cpf} | Tipo Sanguíneo: {patient.bloodType}</p>
+          <h1>Consulta - {patient?.nome || 'Paciente'}</h1>
+          <p>CPF: {patient?.cpf} | Sangue: {patient?.tipoSang || 'O+'}</p>
         </div>
-        <button className="btn btn-secondary" onClick={onBack}>
-          <ArrowLeft size={16} style={{ marginRight: '0.5rem' }} />
-          Voltar
-        </button>
+        <button className="btn btn-secondary" onClick={onBack}><ArrowLeft size={16} /> Voltar</button>
       </div>
 
       <div className="consultation-grid">
-        <div>
-          {/* Diagnóstico */}
+        <div className="consultation-main">
+          {/* Evolução Clínica com CIDs */}
           <div className="card mb-4">
-            <div className="card-header">
-              <h2 className="card-title">Diagnóstico</h2>
-            </div>
+            <div className="card-header"><h2 className="card-title">Evolução Clínica</h2></div>
             <div className="card-content">
-              <textarea
-                className="textarea"
-                placeholder="Descreva o diagnóstico do paciente..."
-                value={diagnosis}
-                onChange={(e) => setDiagnosis(e.target.value)}
-                rows="4"
-              />
-            </div>
-          </div>
-
-          {/* Plano de Tratamento */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <h2 className="card-title">Plano de Tratamento</h2>
-            </div>
-            <div className="card-content">
-              <textarea
-                className="textarea"
-                placeholder="Descreva o plano de tratamento..."
-                value={treatmentPlan}
-                onChange={(e) => setTreatmentPlan(e.target.value)}
-                rows="4"
+              <div className="form-grid mb-3">
+                <div className="form-group">
+                  <label className="label">CID Principal *</label>
+                  <input className="input" placeholder="Ex: J06.9" value={cidPrin} onChange={(e) => setCidPrin(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label className="label">CID Secundário</label>
+                  <input className="input" placeholder="Ex: R05" value={cidSecun} onChange={(e) => setCidSecun(e.target.value)} />
+                </div>
+              </div>
+              <label className="label">Resumo do Atendimento *</label>
+              <textarea 
+                className="textarea" 
+                rows="8" 
+                placeholder="Descreva o atendimento..." 
+                value={resumo} 
+                onChange={(e) => setResumo(e.target.value)} 
               />
             </div>
           </div>
@@ -143,246 +169,59 @@ export const ConsultationPage = ({ appointmentId, onBack }) => {
             <div className="card-header">
               <div className="section-header">
                 <h2 className="card-title">Prescrições</h2>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setShowPrescriptionForm(!showPrescriptionForm)}
-                >
-                  <Plus size={16} style={{ marginRight: '0.25rem' }} />
-                  Adicionar
-                </button>
+                <button className="btn btn-primary btn-sm" onClick={() => setShowPrescriptionForm(!showPrescriptionForm)}><Plus size={16} /> Adicionar</button>
               </div>
             </div>
             <div className="card-content">
               {showPrescriptionForm && (
-                <form onSubmit={handleAddPrescription} className="mb-4" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
+                <div className="prescription-form mb-4 p-3 border rounded">
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label className="label">Medicamento</label>
-                      <input
-                        type="text"
-                        className="input"
-                        value={prescriptionForm.medication}
-                        onChange={(e) => setPrescriptionForm({ ...prescriptionForm, medication: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="label">Dosagem</label>
-                      <input
-                        type="text"
-                        className="input"
-                        value={prescriptionForm.dosage}
-                        onChange={(e) => setPrescriptionForm({ ...prescriptionForm, dosage: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="label">Frequência</label>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Ex: 8 em 8 horas"
-                        value={prescriptionForm.frequency}
-                        onChange={(e) => setPrescriptionForm({ ...prescriptionForm, frequency: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="label">Duração</label>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Ex: 7 dias"
-                        value={prescriptionForm.duration}
-                        onChange={(e) => setPrescriptionForm({ ...prescriptionForm, duration: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group form-group-full">
-                      <label className="label">Instruções</label>
-                      <textarea
-                        className="textarea"
-                        value={prescriptionForm.instructions}
-                        onChange={(e) => setPrescriptionForm({ ...prescriptionForm, instructions: e.target.value })}
-                      />
-                    </div>
+                    <input className="input" placeholder="Medicamento" value={prescriptionForm.medication} onChange={(e) => setPrescriptionForm({...prescriptionForm, medication: e.target.value})} />
+                    <input className="input" placeholder="Dosagem" value={prescriptionForm.dosage} onChange={(e) => setPrescriptionForm({...prescriptionForm, dosage: e.target.value})} />
                   </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                    <button type="submit" className="btn btn-success btn-sm">Adicionar</button>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowPrescriptionForm(false)}>Cancelar</button>
-                  </div>
-                </form>
+                  <button className="btn btn-success btn-sm mt-3" onClick={(e) => {
+                    e.preventDefault();
+                    setPrescriptions([...prescriptions, {...prescriptionForm, id: Date.now()}]);
+                    setShowPrescriptionForm(false);
+                    setPrescriptionForm({ medication: '', dosage: '', frequency: '', duration: '', instructions: '' });
+                  }}>Salvar Item</button>
+                </div>
               )}
-
-              {prescriptions.length === 0 ? (
-                <p className="empty-state" style={{ padding: '1rem' }}>Nenhuma prescrição adicionada</p>
-              ) : (
-                prescriptions.map((prescription) => (
-                  <div key={prescription.id} className="prescription-item">
-                    <h4>{prescription.medication}</h4>
-                    <p><strong>Dosagem:</strong> {prescription.dosage}</p>
-                    <p><strong>Frequência:</strong> {prescription.frequency}</p>
-                    <p><strong>Duração:</strong> {prescription.duration}</p>
-                    {prescription.instructions && <p><strong>Instruções:</strong> {prescription.instructions}</p>}
-                    <div className="prescription-actions">
-                      <button
-                        className="btn-ghost btn-icon btn-delete"
-                        onClick={() => handleRemovePrescription(prescription.id)}
-                        title="Remover"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Solicitação de Exames */}
-          <div className="card mb-4">
-            <div className="card-header">
-              <div className="section-header">
-                <h2 className="card-title">Solicitação de Exames</h2>
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setShowExamForm(!showExamForm)}
-                >
-                  <Plus size={16} style={{ marginRight: '0.25rem' }} />
-                  Adicionar
-                </button>
-              </div>
-            </div>
-            <div className="card-content">
-              {showExamForm && (
-                <form onSubmit={handleAddExam} className="mb-4" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '1rem' }}>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="label">Tipo de Exame</label>
-                      <input
-                        type="text"
-                        className="input"
-                        placeholder="Ex: Hemograma completo"
-                        value={examForm.examType}
-                        onChange={(e) => setExamForm({ ...examForm, examType: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group form-group-full">
-                      <label className="label">Motivo</label>
-                      <textarea
-                        className="textarea"
-                        value={examForm.reason}
-                        onChange={(e) => setExamForm({ ...examForm, reason: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-                    <button type="submit" className="btn btn-success btn-sm">Adicionar</button>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowExamForm(false)}>Cancelar</button>
-                  </div>
-                </form>
-              )}
-
-              {exams.length === 0 ? (
-                <p className="empty-state" style={{ padding: '1rem' }}>Nenhum exame solicitado</p>
-              ) : (
-                exams.map((exam) => (
-                  <div key={exam.id} className="exam-item">
-                    <h4>{exam.examType}</h4>
-                    <p>{exam.reason}</p>
-                    <div className="exam-actions">
-                      <button
-                        className="btn-ghost btn-icon btn-delete"
-                        onClick={() => handleRemoveExam(exam.id)}
-                        title="Remover"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
+              {prescriptions.length === 0 && <p className="empty-state">Nenhuma prescrição</p>}
+              {prescriptions.map(p => (
+                <div key={p.id} className="prescription-item" style={{display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee'}}>
+                  <span>{p.medication} - {p.dosage}</span>
+                  <button className="text-red" onClick={() => setPrescriptions(prescriptions.filter(i => i.id !== p.id))}><Trash2 size={14}/></button>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Sidebar - Informações do Paciente */}
-        <div>
-          <div className="card mb-4">
-            <div className="card-header">
-              <h3 className="card-title">Informações do Paciente</h3>
-            </div>
+        {/* Sidebar Direita (Pop-up style) */}
+        <aside className="consultation-sidebar">
+          <div className="card mb-4 info-card">
+            <div className="card-header"><h3 className="card-title">Dados do Paciente</h3></div>
             <div className="card-content">
-              <div style={{ marginBottom: '1rem' }}>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: '0 0 0.25rem 0' }}>Email</p>
-                <p style={{ fontWeight: 500, margin: 0 }}>{patient.email}</p>
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: '0 0 0.25rem 0' }}>Telefone</p>
-                <p style={{ fontWeight: 500, margin: 0 }}>{patient.phone}</p>
-              </div>
-              <div style={{ marginBottom: '1rem' }}>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: '0 0 0.25rem 0' }}>Data de Nascimento</p>
-                <p style={{ fontWeight: 500, margin: 0 }}>
-                  {new Date(patient.dateOfBirth).toLocaleDateString('pt-BR')}
-                </p>
-              </div>
-              <div>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: '0 0 0.25rem 0' }}>Endereço</p>
-                <p style={{ fontWeight: 500, margin: 0 }}>{patient.address}</p>
-              </div>
+              <p><strong>Email:</strong> {patient?.email}</p>
+              <p><strong>Telefone:</strong> {patient?.telefone || 'N/A'}</p>
             </div>
           </div>
-
           {triage && (
-            <div className="card mb-4">
-              <div className="card-header">
-                <h3 className="card-title">Sinais Vitais</h3>
-              </div>
+            <div className="card info-card">
+              <div className="card-header"><h3 className="card-title">Sinais Vitais</h3></div>
               <div className="card-content">
-                <div className="patient-vital-signs">
-                  <div className="vital-sign-row">
-                    <strong>Pressão Arterial</strong>
-                    <span>{triage.bloodPressure}</span>
-                  </div>
-                  <div className="vital-sign-row">
-                    <strong>Temperatura</strong>
-                    <span>{triage.temperature}°C</span>
-                  </div>
-                  <div className="vital-sign-row">
-                    <strong>Peso</strong>
-                    <span>{triage.weight} kg</span>
-                  </div>
-                  <div className="vital-sign-row">
-                    <strong>Altura</strong>
-                    <span>{triage.height} cm</span>
-                  </div>
-                </div>
-                {triage.observations && (
-                  <div style={{ marginTop: '1rem' }}>
-                    <strong style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-                      Observações:
-                    </strong>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: 0 }}>
-                      {triage.observations}
-                    </p>
-                  </div>
-                )}
+                <p><strong>Sinais:</strong> {triage.sinais_vitais}</p>
+                <p><strong>Peso:</strong> {triage.peso} kg | <strong>Alt:</strong> {triage.altura} cm</p>
               </div>
             </div>
           )}
-        </div>
+        </aside>
       </div>
 
       <div className="consultation-actions">
-        <button className="btn btn-secondary" onClick={onBack}>
-          Cancelar
-        </button>
-        <button className="btn btn-success" onClick={handleCompleteConsultation}>
-          Finalizar Consulta
-        </button>
+        <button className="btn btn-secondary" onClick={onBack}>Cancelar</button>
+        <button className="btn btn-success" onClick={handleCompleteConsultation}>Finalizar Consulta</button>
       </div>
     </div>
   );

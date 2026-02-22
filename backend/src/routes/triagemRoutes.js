@@ -17,5 +17,4 @@ routes.get('/triagem/medico/buscar', auth, authMedic, medicoController.select);
 routes.put('/triagem/medico', auth, authMedic, medicoController.update);
 
 
-
-module.exports = routes;
+module.exports = routes; 

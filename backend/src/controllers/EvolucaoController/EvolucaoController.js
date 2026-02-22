@@ -30,7 +30,7 @@ module.exports = {
                 new ObjectId(id_medic),
                 new ObjectId(id_paci)
             )
-            
+            evolucao.data_criacao = new Date();
             const resultado = await EvolucaoRepo.create(evolucao);
 
             res.status(200).json({

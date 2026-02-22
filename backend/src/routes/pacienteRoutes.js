@@ -6,8 +6,8 @@ const authRecep = require('../middlewares/authRecepcionista');
 const routes = new Router();
 
 routes.post('/pacientes', auth, authRecep, PacienteController.create);
-routes.get('/pacientes', auth, authRecep, PacienteController.list);
-routes.get('/pacientes/buscar', auth, authRecep, PacienteController.select);
+routes.get('/pacientes', auth, PacienteController.list);
+routes.get('/pacientes/buscar', auth, PacienteController.select);
 routes.put('/pacientes', auth, authRecep, PacienteController.update);
 routes.delete('/pacientes', auth, authRecep, PacienteController.delete);
 

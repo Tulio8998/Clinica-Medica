@@ -13,45 +13,46 @@ export const Login = () => {
   const [erro, setErro] = useState('');
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-  setErro('');
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErro('');
 
-  try {
-    const response = await fetch("http://localhost:3001/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        email: email,
-        senha: password,
-        tipo: role 
-      })
-    });
+    try {
+      const response = await fetch("http://localhost:3001/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email,
+          senha: password,
+          tipo: role 
+        })
+      });
 
-    // Se o status for 200, mas o JSON falhar, o erro cai no catch abaixo
-    const result = await response.json();
-    console.log("Resposta do Servidor:", result);
+      const result = await response.json();
+      console.log("Resposta do Servidor:", result);
 
-    if (response.ok) {
-      const userData = {
-        nome: result.usuario.nome,
-        email: email,
-        role: role, 
-        token: result.token || ''
-      };
+      if (response.ok) {
+        // CORREÇÃO AQUI: Adicionando o ID que o backend enviou
+        const userData = {
+          id: result.usuario._id || result.usuario.id, // Captura o ID do banco
+          nome: result.usuario.nome,
+          email: email,
+          role: role, 
+          token: result.token || ''
+        };
 
-      console.log("Fazendo login no contexto com:", userData);
-      login(userData); 
-    } else {
-      setErro(result.erro || "Credenciais inválidas");
+        console.log("Fazendo login no contexto com:", userData);
+        login(userData); 
+      } else {
+        setErro(result.erro || "Credenciais inválidas");
+      }
+    } catch (error) {
+      console.error("Erro detalhado:", error);
+      setErro("Erro ao processar login. Verifique o console.");
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (error) {
-    console.error("Erro detalhado:", error);
-    setErro("Erro ao processar login. Verifique o console.");
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   return (
     <div className="login-container">

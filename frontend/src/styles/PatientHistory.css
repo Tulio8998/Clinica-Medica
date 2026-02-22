@@ -1,0 +1,178 @@
+.history-container {
+  padding: 1.5rem;
+  height: calc(100vh - 80px); /* Ajusta para a altura da tela descontando o header */
+  display: flex;
+  flex-direction: column;
+}
+
+.history-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr; /* Sidebar fixa e conteúdo expansível */
+  gap: 1.5rem;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* --- SIDEBAR DE PACIENTES --- */
+.patient-sidebar {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  color: #94a3b8;
+}
+
+.search-input-wrapper .input {
+  padding-left: 40px;
+  width: 100%;
+}
+
+.patient-list {
+  flex: 1;
+  overflow-y: auto;
+  border-top: 1px solid #f1f5f9;
+}
+
+.patient-list-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 1px solid #f8fafc;
+  gap: 12px;
+}
+
+.patient-list-item:hover {
+  background-color: #f1f5f9;
+}
+
+.patient-list-item.active {
+  background-color: #eff6ff;
+  border-left: 4px solid #3b82f6;
+}
+
+.patient-avatar {
+  width: 40px;
+  height: 40px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.patient-info .name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.patient-info .cpf {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.arrow-icon {
+  margin-left: auto;
+  color: #cbd5e1;
+}
+
+/* --- ÁREA DO PRONTUÁRIO --- */
+.evolution-main {
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.patient-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.timeline-title {
+  margin: 1.5rem 0 1rem;
+  font-size: 1.1rem;
+  color: #334155;
+}
+
+/* --- LINHA DO TEMPO (TIMELINE) --- */
+.timeline {
+  position: relative;
+  padding-left: 2rem;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #e2e8f0;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+  position: absolute;
+  left: -29px;
+  top: 15px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.evo-date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: #64748b;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.evo-content h4 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.evo-content p {
+  color: #475569;
+  line-height: 1.6;
+  white-space: pre-wrap; /* Mantém as quebras de linha do médico */
+}
+
+.empty-state-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #94a3b8;
+  text-align: center;
+}

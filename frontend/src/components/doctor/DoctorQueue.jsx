@@ -1,184 +1,204 @@
-import React from 'react';
-import { useApp } from '../../context/AppContext.jsx';
+import React, { useState, useEffect } from 'react';
 import { Users, Clock, AlertCircle } from 'lucide-react';
 import '../../styles/DoctorQueue.css'; 
 
 export const DoctorQueue = ({ onStartConsultation }) => {
-  const { appointments, patients, triages, currentUser } = useApp();
+  const [appointments, setAppointments] = useState([]);
+  const [triages, setTriages] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get appointments for current doctor
-  const myAppointments = appointments.filter(
-    (apt) => apt.doctorId === currentUser?.id && apt.status === 'pendente'
-  );
+  const fetchData = async () => {
+    try {
+      const storedUser = localStorage.getItem('@Clinica:user');
+      if (!storedUser) return;
+      
+      const userObj = JSON.parse(storedUser);
+      const headers = { 'Authorization': `Bearer ${userObj.token}` };
 
-  // Sort by triage priority and time
-  const sortedAppointments = [...myAppointments].sort((a, b) => {
-    const triageA = triages.find((t) => t.appointmentId === a.id);
-    const triageB = triages.find((t) => t.appointmentId === b.id);
+      const resApt = await fetch('http://localhost:3001/agendamento/medico', { headers });
+      const dataApt = await resApt.json();
+      
+      const resTri = await fetch('http://localhost:3001/triagem/medico', { headers });
+      const dataTri = await resTri.json();
+      
+      const resPac = await fetch('http://localhost:3001/pacientes', { headers });
+      const dataPac = await resPac.json();
 
-    const priorityOrder = { red: 0, yellow: 1, green: 2, blue: 3 };
-    const priorityA = triageA ? priorityOrder[triageA.riskClassification] : 4;
-    const priorityB = triageB ? priorityOrder[triageB.riskClassification] : 4;
+      setAppointments(Array.isArray(dataApt) ? dataApt : []);
+      setTriages(Array.isArray(dataTri) ? dataTri : []);
+      setPatients(Array.isArray(dataPac) ? dataPac : []);
+    } catch (error) {
+      console.error('Erro ao buscar fila do médico:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (priorityA !== priorityB) return priorityA - priorityB;
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-    const timeA = new Date(`${a.date} ${a.time}`);
-    const timeB = new Date(`${b.date} ${b.time}`);
-    return timeA.getTime() - timeB.getTime();
+  const pendingWithTriage = [];
+  const pendingNoTriage = [];
+  const completed = [];
+
+  appointments.forEach((apt) => {
+    const aptId = String(apt._id || apt.id);
+    const hasTriage = triages.find(t => String(t.id_agen || t.id_agend || t.appointmentId || '') === aptId);
+    
+    const isPending = apt.status !== true && apt.status !== "atendido" && apt.status !== "true";
+
+    if (!isPending) {
+      completed.push(apt);
+    } else if (hasTriage) {
+      pendingWithTriage.push({ ...apt, triage: hasTriage });
+    } else {
+      pendingNoTriage.push(apt);
+    }
   });
 
-  const appointmentsWithTriage = sortedAppointments.filter(
-    (apt) => apt.triageCompleted
-  );
+  pendingWithTriage.sort((a, b) => {
+    const priorityOrder = { red: 0, yellow: 1, green: 2, blue: 3 };
+    const pA = (a.triage && a.triage.classificacao) ? (priorityOrder[a.triage.classificacao] ?? 4) : 4;
+    const pB = (b.triage && b.triage.classificacao) ? (priorityOrder[b.triage.classificacao] ?? 4) : 4;
+
+    if (pA !== pB) return pA - pB;
+    return String(a.horario || '').localeCompare(String(b.horario || ''));
+  });
+
+  // Função para formatar a data de YYYY-MM-DD para DD/MM/YYYY
+  const formatData = (dataStr) => {
+    if (!dataStr) return 'N/A';
+    if (dataStr.includes('-')) {
+      const [ano, mes, dia] = dataStr.split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+    return dataStr;
+  };
+
+  const renderPatientCard = (apt, showAction, customBadgeLabel) => {
+    const aptId = String(apt._id || apt.id);
+    const patient = patients.find((p) => String(p._id || p.id) === String(apt.id_paci || apt.paciente_id));
+    const triage = apt.triage;
+
+    const getRiskClass = (risk) => {
+      const classes = { red: 'emergency', yellow: 'urgent', green: 'normal', blue: 'normal' };
+      return classes[risk] || 'normal';
+    };
+
+    return (
+      <div key={aptId} className={`patient-queue-item ${!showAction ? 'opacity-75' : ''}`} style={{ marginBottom: '1rem' }}>
+        <div className="patient-queue-header">
+          <div className="patient-queue-info">
+            <h3 style={{ margin: 0 }}>{patient?.nome || 'Paciente não encontrado'}</h3>
+            <p style={{ margin: 0, fontSize: '0.85rem' }}>CPF: {patient?.cpf || '---'}</p>
+          </div>
+          {triage ? (
+            <span className={`priority-badge ${getRiskClass(triage.classificacao)}`}>
+              {triage.classificacao === 'red' ? 'Emergência' : 
+               triage.classificacao === 'yellow' ? 'Urgência' : 'Normal'}
+            </span>
+          ) : (
+            <span className="priority-badge" style={{ background: '#e2e8f0', color: '#475569' }}>
+              {customBadgeLabel || 'Aguardando Triagem'}
+            </span>
+          )}
+        </div>
+
+        <div className="patient-queue-details">
+          <div className="patient-queue-detail">
+            <strong>Data:</strong>
+            <span>{formatData(apt.data)}</span>
+          </div>
+          <div className="patient-queue-detail">
+            <strong>Horário:</strong>
+            <span>{apt.horario || 'N/A'}</span>
+          </div>
+          {triage && (
+            <div className="patient-queue-detail">
+              <strong>Sinais Vitais:</strong>
+              <span>{triage.sinais_vitais || 'N/A'}</span>
+            </div>
+          )}
+        </div>
+
+        {showAction && (
+          <div className="patient-queue-actions mt-3">
+            <button className="btn btn-primary" onClick={() => onStartConsultation(aptId)}>
+              Iniciar Consulta
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  if (loading) return <div className="p-4">Carregando painel do médico...</div>;
 
   return (
     <div>
       <div className="queue-header">
-        <h1>Fila de Atendimento</h1>
-        <p>Pacientes aguardando consulta</p>
+        <h1>Painel de Atendimento</h1>
+        <p>Visão geral de todos os agendamentos do dia</p>
       </div>
 
-      <div className="dashboard-stats">
-        <div className="card">
+      <div className="dashboard-stats mb-4" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+        <div className="card" style={{ flex: 1 }}>
           <div className="card-header stat-card-header">
-            <h3 className="stat-card-title">Total na Fila</h3>
-            <div className="stat-icon primary">
-              <Users size={16} />
-            </div>
+            <h3 className="stat-card-title">Prontos</h3>
+            <div className="stat-icon success"><AlertCircle size={16} /></div>
           </div>
           <div className="card-content">
-            <div className="stat-value">{myAppointments.length}</div>
+            <div className="stat-value">{pendingWithTriage.length}</div>
           </div>
         </div>
-
-        <div className="card">
+        
+        <div className="card" style={{ flex: 1 }}>
           <div className="card-header stat-card-header">
-            <h3 className="stat-card-title">Aguardando Triagem</h3>
-            <div className="stat-icon success">
-              <Clock size={16} />
-            </div>
+            <h3 className="stat-card-title">Enfermaria</h3>
+            <div className="stat-icon warning"><Clock size={16} /></div>
           </div>
           <div className="card-content">
-            <div className="stat-value">
-              {myAppointments.filter((apt) => !apt.triageCompleted).length}
-            </div>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-header stat-card-header">
-            <h3 className="stat-card-title">Prontos para Atendimento</h3>
-            <div className="stat-icon success">
-              <AlertCircle size={16} />
-            </div>
-          </div>
-          <div className="card-content">
-            <div className="stat-value">{appointmentsWithTriage.length}</div>
+            <div className="stat-value">{pendingNoTriage.length}</div>
           </div>
         </div>
       </div>
 
-      <div className="grid">
-        {appointmentsWithTriage.length === 0 ? (
-          <div className="card">
-            <div className="card-content">
-              <p className="empty-state">Nenhum paciente na fila de atendimento</p>
-            </div>
+      {appointments.length === 0 && (
+        <div className="card mb-4">
+          <div className="card-content text-center" style={{ color: '#64748b' }}>
+            O servidor não enviou nenhum agendamento para este médico hoje.
           </div>
-        ) : (
-          appointmentsWithTriage.map((appointment) => {
-            const patient = patients.find((p) => p.id === appointment.patientId);
-            const triage = triages.find((t) => t.appointmentId === appointment.id);
+        </div>
+      )}
 
-            const getRiskClass = (risk) => {
-              const classes = {
-                red: 'emergency',
-                yellow: 'urgent',
-                green: 'normal',
-                blue: 'normal',
-              };
-              return classes[risk] || 'normal';
-            };
+      {pendingWithTriage.length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.2rem', color: '#16a34a', marginBottom: '1rem' }}>🟢 Fila Pronta</h2>
+          <div className="grid">
+            {pendingWithTriage.map(apt => renderPatientCard(apt, true))}
+          </div>
+        </div>
+      )}
 
-            const getRiskLabel = (risk) => {
-              const labels = {
-                red: 'Emergência',
-                yellow: 'Urgência',
-                green: 'Pouco Urgente',
-                blue: 'Não Urgente',
-              };
-              return labels[risk] || risk;
-            };
+      {pendingNoTriage.length > 0 && (
+        <div style={{ marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.2rem', color: '#ca8a04', marginBottom: '1rem' }}>🟡 Na Enfermaria (Sem Triagem)</h2>
+          <div className="grid">
+            {pendingNoTriage.map(apt => renderPatientCard(apt, false))}
+          </div>
+        </div>
+      )}
 
-            return (
-              <div key={appointment.id} className="patient-queue-item">
-                <div className="patient-queue-header">
-                  <div className="patient-queue-info">
-                    <h3>{patient?.name}</h3>
-                    <p>CPF: {patient?.cpf}</p>
-                  </div>
-                  {triage && (
-                    <span className={`priority-badge ${getRiskClass(triage.riskClassification)}`}>
-                      {getRiskLabel(triage.riskClassification)}
-                    </span>
-                  )}
-                </div>
-
-                <div className="patient-queue-details">
-                  <div className="patient-queue-detail">
-                    <strong>Horário:</strong>
-                    <span>{appointment.time}</span>
-                  </div>
-                  <div className="patient-queue-detail">
-                    <strong>Data:</strong>
-                    <span>{new Date(appointment.date).toLocaleDateString('pt-BR')}</span>
-                  </div>
-                  {triage && (
-                    <>
-                      <div className="patient-queue-detail">
-                        <strong>Pressão:</strong>
-                        <span>{triage.bloodPressure}</span>
-                      </div>
-                      <div className="patient-queue-detail">
-                        <strong>Temperatura:</strong>
-                        <span>{triage.temperature}°C</span>
-                      </div>
-                      <div className="patient-queue-detail">
-                        <strong>Peso:</strong>
-                        <span>{triage.weight} kg</span>
-                      </div>
-                      <div className="patient-queue-detail">
-                        <strong>Altura:</strong>
-                        <span>{triage.height} cm</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {triage && triage.observations && (
-                  <div style={{ marginBottom: '1rem' }}>
-                    <strong style={{ display: 'block', marginBottom: '0.25rem' }}>
-                      Observações da Triagem:
-                    </strong>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: 0 }}>
-                      {triage.observations}
-                    </p>
-                  </div>
-                )}
-
-                <div className="patient-queue-actions">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => onStartConsultation(appointment.id)}
-                  >
-                    Iniciar Consulta
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
+      {completed.length > 0 && (
+        <div>
+          <h2 style={{ fontSize: '1.2rem', color: '#64748b', marginBottom: '1rem' }}>✔️ Já Atendidos</h2>
+          <div className="grid">
+            {completed.map(apt => renderPatientCard(apt, false, 'Atendido'))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

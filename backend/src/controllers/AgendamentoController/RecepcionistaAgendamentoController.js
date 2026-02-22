@@ -50,7 +50,7 @@ module.exports = {
             const agendamento = new Agendamento(
                 data,
                 descricao,
-                true,
+                false,
                 horario,
                 horarioFim, // NOVO CAMPO AQUI
                 new ObjectId(id_recep),

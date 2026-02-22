@@ -99,16 +99,18 @@ export const ReceptionistDashboard = () => {
                 todayAppointments.slice(0, 5).map((apt) => {
                   const patient = patients.find((p) => p._id === apt.id_paci);
                   const doctor = doctors.find((d) => d._id === apt.id_medic);
+                  const isCompleted = apt.status === true || apt.status === "true";
                   return (
                     <div key={apt._id} className="appointment-item">
                       <div className="appointment-info">
-                        <p>{patient?.nome}</p>
-                        <p>{doctor?.nome}</p>
+                        <p style={{ fontWeight: '600', color: '#1e293b' }}>{patient?.nome || 'Paciente'}</p>
+                        <p style={{ fontSize: '0.85rem', color: '#64748b' }}>{doctor?.nome || 'Médico'}</p>
                       </div>
                       <div className="appointment-time">
                         <p>{apt.horario} às {apt.horarioFim}</p>
-                        <span className={`badge ${apt.status === 'pendente' ? 'badge-primary' : 'badge-success'}`}>
-                          {apt.status === 'pendente' ? 'Pendente' : 'Concluído'}
+                        {/* Ajuste das cores e texto conforme o booleano real */}
+                        <span className={`badge ${isCompleted ? 'badge-success' : 'badge-primary'}`}>
+                          {isCompleted ? 'Concluído' : 'Pendente'}
                         </span>
                       </div>
                     </div>

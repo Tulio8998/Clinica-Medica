@@ -7,7 +7,7 @@ class AgendamentoRepository extends BaseRepository {
     }
 
     async findPendentes() {
-        return await this.getDb().find({ status: true }).toArray();
+        return await this.getDb().find({ status: false }).toArray();
     }
 
     // --- NOVA FUNÇÃO: Busca agenda do médico no dia ---

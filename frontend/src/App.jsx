@@ -9,6 +9,7 @@ import { TriagePage } from '../src/components/nurse/TriagePage';
 import { PharmacyPage } from '../src/components/nurse/PharmacyPage';
 import { DoctorQueue } from '../src/components/doctor/DoctorQueue';
 import { ConsultationPage } from '../src/components/doctor/ConsultationPage';
+import { PatientHistory } from '../src/components/doctor/PatientHistory';
 import '../src/styles/global.css';
 import '../src/styles/App.css';
 
@@ -92,6 +93,8 @@ const AppContent = () => {
           ) : (
             <DoctorQueue onStartConsultation={setConsultationAppointmentId} />
           );
+        case 'history':
+          return <PatientHistory />;
         default:
           return <DoctorQueue onStartConsultation={setConsultationAppointmentId} />;
       }
