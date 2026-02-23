@@ -50,7 +50,7 @@ export const PatientHistory = () => {
       const [resEvo, resRec, resTri] = await Promise.all([
         fetch('http://localhost:3001/evolucao', { headers: { 'Authorization': `Bearer ${token}` } }),
         fetch('http://localhost:3001/receitas', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('http://localhost:3001/triagem/enfermeiro', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch('http://localhost:3001/triagem/medico', { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       
       let combinedHistory = [];
@@ -60,7 +60,7 @@ export const PatientHistory = () => {
         const evos = await resEvo.json();
         const myEvos = evos
           .filter(e => String(e.id_paci || e.paciente_id || e.id_paciente || '') === pId)
-          .map(e => ({ ...e, type: 'consulta', date: e.data_criacao }));
+          .map(e => ({ ...e, type: 'consulta', date: e.data}));
         combinedHistory = [...combinedHistory, ...myEvos];
       }
 
@@ -69,17 +69,19 @@ export const PatientHistory = () => {
         const recs = await resRec.json();
         const myRecs = recs
           .filter(e => String(e.id_paci || e.paciente_id || e.id_paciente || '') === pId)
-          .map(e => ({ ...e, type: 'receita', date: e.data_criacao }));
+          .map(e => ({ ...e, type: 'receita', date: e.emissao }));
         combinedHistory = [...combinedHistory, ...myRecs];
       }
 
       // Processar Triagens
       if (resTri.ok) {
         const tris = await resTri.json();
-        const myTris = tris
-          .filter(e => String(e.id_paci || e.paciente_id || e.id_paciente || '') === pId)
-          .map(e => ({ ...e, type: 'triagem', date: e.data_criacao }));
-        combinedHistory = [...combinedHistory, ...myTris];
+        if (Array.isArray(tris)) {
+          const myTris = tris
+            .filter(e => String(e.id_paci || e.paciente_id || e.id_paciente || '') === pId)
+            .map(e => ({ ...e, type: 'triagem', date: e.data }));
+          combinedHistory = [...combinedHistory, ...myTris];
+        }
       }
 
       // Ordenar por data (mais recente primeiro)
@@ -192,7 +194,7 @@ export const PatientHistory = () => {
                             </div>
                           )}
                           {item.type === 'triagem' && (
-                            <p><strong>Pressão:</strong> {item.pressao} | <strong>Peso:</strong> {item.peso}kg | <strong>Temp:</strong> {item.temperatura}°C</p>
+                            <p><strong>Sinais Vitais:</strong> {item.sinais_vitais} | <strong>Peso:</strong> {item.peso}kg | <strong>Classificação:</strong> {item.classificacao}</p>
                           )}
                         </div>
                       </div>
