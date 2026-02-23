@@ -146,8 +146,7 @@ export const DoctorQueue = ({ onStartConsultation }) => {
       <div className="dashboard-stats mb-4" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
         <div className="card" style={{ flex: 1 }}>
           <div className="card-header stat-card-header">
-            <h3 className="stat-card-title">Prontos</h3>
-            <div className="stat-icon success"><AlertCircle size={16} /></div>
+            <h3 className="stat-card-title">Prontos (Com Triagem)</h3>
           </div>
           <div className="card-content">
             <div className="stat-value">{pendingWithTriage.length}</div>
@@ -156,8 +155,7 @@ export const DoctorQueue = ({ onStartConsultation }) => {
         
         <div className="card" style={{ flex: 1 }}>
           <div className="card-header stat-card-header">
-            <h3 className="stat-card-title">Enfermaria</h3>
-            <div className="stat-icon warning"><Clock size={16} /></div>
+            <h3 className="stat-card-title">Enfermaria (Realizando Triagem)</h3>
           </div>
           <div className="card-content">
             <div className="stat-value">{pendingNoTriage.length}</div>
