@@ -1,3 +1,4 @@
+const bcryptjs = require('bcryptjs');
 const Enfermeiro = require('../../models/EnfermeiroModel');
 const Endereco = require('../../models/EnderecoModel');
 const EnfermeiroRepo = require('../../repositories/EnfermeiroRepository');
@@ -97,7 +98,7 @@ module.exports = {
 
             if (erros.length > 0) return res.status(404).json({ erros });
 
-            const dados = { nome, cpf, email, senha , dataNasc, endereco, telefone, uf, coren };
+            const dados = { nome, cpf, email, senha: senha || enfermeiro.senha , dataNasc, endereco, telefone, uf, coren };
 
             const errosValidacao = Enfermeiro.validarEnfermeiro(dados);
             if (errosValidacao.length > 0) erros.push(...errosValidacao);
@@ -126,13 +127,17 @@ module.exports = {
                 nome, 
                 cpf, 
                 email, 
-                senha, 
                 dataNasc, 
                 endereco, 
                 telefone, 
                 uf, 
-                coren };
+                coren 
+            };
             
+            if (senha) {
+                dadosAtualizados.senha = await bcryptjs.hash(senha, 8);
+            }
+
             await EnfermeiroRepo.update(id_enfer, dadosAtualizados);
 
             res.status(200).json({ mensagem: "Enfermeiro atualizado!" });

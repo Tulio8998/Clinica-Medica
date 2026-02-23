@@ -1,3 +1,4 @@
+const bcryptjs = require('bcryptjs');
 const Paciente = require('../../models/PacienteModel');
 const PacienteRepo = require('../../repositories/PacienteRepository');
 const Endereco = require('../../models/EnderecoModel');
@@ -96,7 +97,7 @@ module.exports = {
             if (erros.length > 0) return res.status(404).json({ erros });
 
             const dados = {
-                nome, cpf, email, senha , dataNasc, 
+                nome, cpf, email, senha: senha || paciente.senha , dataNasc, 
                 endereco, telefone, tipoSang
             };
 
@@ -123,16 +124,19 @@ module.exports = {
                 return res.status(400).json({ erros });
             }
 
-            const dadosAtualizados = { 
+            const dadosAtualizados = new Paciente ( 
                 nome, 
                 cpf, 
                 email, 
-                senha, 
                 dataNasc, 
                 endereco, 
                 telefone, 
                 tipoSang 
-            };
+            );
+
+            if (senha) {
+                dadosAtualizados.senha = await bcryptjs.hash(senha, 8);
+            }
 
             await PacienteRepo.update(id_paci, dadosAtualizados);
 
