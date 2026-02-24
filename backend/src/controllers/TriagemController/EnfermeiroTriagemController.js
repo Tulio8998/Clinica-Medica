@@ -32,7 +32,7 @@ module.exports = {
             if (!descricao) erros.push("O campo 'descricao' é obrigatório.");
             if (!classificacao) erros.push("O campo 'classificacao' é obrigatório.");
             if (!paciente) erros.push("Paciente não encontrado");
-            if (!enfermeiro) erros.push("Enferemeiro não encontrada");
+            if (!enfermeiro) erros.push("Enfermeiro não encontrado");
             if (!agendamento) erros.push("Agendamento não encontrada");
             if (erros.length > 0) {
                 return res.status(400).json({ erros });
