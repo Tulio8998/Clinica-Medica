@@ -16,7 +16,7 @@ export const ConsultationPage = ({ appointmentId, onBack }) => {
   const [showPrescriptionForm, setShowPrescriptionForm] = useState(false);
 
   const [prescriptionForm, setPrescriptionForm] = useState({
-    medication: '', dosage: ''
+    medication: '', dosage: '', validade: ''
   });
 
   useEffect(() => {
@@ -109,6 +109,7 @@ export const ConsultationPage = ({ appointmentId, onBack }) => {
             id_medic: userObj?.id || userObj?._id,
             id_evolu: evoId,
             descricao: `${rx.medication} - ${rx.dosage}`,
+            validade: rx.validade,
             emissao: new Date().toISOString()
           })
         });
@@ -181,19 +182,20 @@ export const ConsultationPage = ({ appointmentId, onBack }) => {
                   <div className="form-grid">
                     <input className="input" placeholder="Medicamento" value={prescriptionForm.medication} onChange={(e) => setPrescriptionForm({...prescriptionForm, medication: e.target.value})} />
                     <input className="input" placeholder="Dosagem" value={prescriptionForm.dosage} onChange={(e) => setPrescriptionForm({...prescriptionForm, dosage: e.target.value})} />
+                    <input className="input" placeholder="Validade (Ex: 30 dias)" value={prescriptionForm.validade} onChange={(e) => setPrescriptionForm({...prescriptionForm, validade: e.target.value})} />
                   </div>
                   <button className="btn btn-success btn-sm mt-3" onClick={(e) => {
                     e.preventDefault();
                     setPrescriptions([...prescriptions, {...prescriptionForm, id: Date.now()}]);
                     setShowPrescriptionForm(false);
-                    setPrescriptionForm({ medication: '', dosage: '' });
+                    setPrescriptionForm({ medication: '', dosage: '', validade: '' });
                   }}>Salvar Item</button>
                 </div>
               )}
               {prescriptions.length === 0 && <p className="empty-state">Nenhuma prescrição</p>}
               {prescriptions.map(p => (
                 <div key={p.id} className="prescription-item" style={{display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid #eee'}}>
-                  <span>{p.medication} - {p.dosage}</span>
+                  <span>{p.medication} - {p.dosage} (Validade: {p.validade})</span>
                   <button className="btn-remove-mini" onClick={() => setPrescriptions(prescriptions.filter(i => i.id !== p.id))}><Trash2 size={14}/></button>
                 </div>
               ))}
