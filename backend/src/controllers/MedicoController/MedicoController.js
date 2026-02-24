@@ -131,7 +131,7 @@ module.exports = {
                 return res.status(400).json({ erros });
             }
 
-            const dadosAtualizados = new Medico (
+            const dadosAtualizados = {
                 nome, 
                 cpf, 
                 email, 
@@ -142,7 +142,7 @@ module.exports = {
                 crm, 
                 especialidade, 
                 descricao
-            );
+            };
 
             if (senha) {
                 dadosAtualizados.senha = await bcryptjs.hash(senha, 8);

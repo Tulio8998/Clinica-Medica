@@ -130,7 +130,7 @@ module.exports = {
                 return res.status(400).json({ erros });
             }
 
-            const dadosAtualizados = new Paciente ( 
+            const dadosAtualizados = {
                 nome, 
                 cpf, 
                 email, 
@@ -138,7 +138,7 @@ module.exports = {
                 endereco, 
                 telefone, 
                 tipoSang 
-            );
+            };
 
             if (senha) {
                 dadosAtualizados.senha = await bcryptjs.hash(senha, 8);
