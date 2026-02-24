@@ -38,7 +38,7 @@ const AppContent = () => {
 
   const renderPage = () => {
     // Handle doctor consultation flow
-    if (consultationAppointmentId && currentUser.role === 'medico') {
+    if (consultationAppointmentId && (currentUser.role === 'medico' || currentUser.role === 'admin')) {
       return (
         <ConsultationPage
           appointmentId={consultationAppointmentId}
@@ -50,6 +50,28 @@ const AppContent = () => {
       );
     }
 
+        // Nurse pages
+    if (currentUser.role === 'admin') {
+      switch (actualPage) {
+        case 'dashboard':
+          return <ReceptionistDashboard />;
+        case 'users':
+          return <UserManagement />;
+        case 'scheduling':
+          return <Scheduling />;
+        case 'queue':
+          return <DoctorQueue onStartConsultation={setConsultationAppointmentId} />;
+        case 'history':
+          return <PatientHistory />;
+        case 'triage':
+          return <TriagePage />;
+        case 'pharmacy':
+          return <PharmacyPage />;
+        default:
+          return <ReceptionistDashboard />;
+      }
+    }
+
     // Receptionist pages
     if (currentUser.role === 'recepcionista' || currentUser.role === 'admin') {
       switch (actualPage) {
@@ -59,6 +81,10 @@ const AppContent = () => {
           return <UserManagement />;
         case 'scheduling':
           return <Scheduling />;
+        case 'queue':
+          return <DoctorQueue onStartConsultation={setConsultationAppointmentId} />;
+        case 'history':
+          return <PatientHistory />;
         default:
           return <ReceptionistDashboard />;
       }

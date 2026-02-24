@@ -26,6 +26,10 @@ export const Sidebar = ({ currentPage, onNavigate, isOpen, onClose }) => {
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'users', label: 'Gestão de Usuários', icon: Users },
         { id: 'scheduling', label: 'Agendamentos', icon: Calendar },
+        { id: 'queue', label: 'Fila de Atendimento', icon: ClipboardList },
+        { id: 'history', label: 'Histórico de Pacientes', icon: Search },
+        { id: 'triage', label: 'Triagem', icon: Activity },
+        { id: 'pharmacy', label: 'Farmácia', icon: Pill },
       ];
     }
 
