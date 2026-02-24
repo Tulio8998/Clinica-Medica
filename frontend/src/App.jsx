@@ -72,8 +72,7 @@ const AppContent = () => {
       }
     }
 
-    // Receptionist pages
-    if (currentUser.role === 'recepcionista' || currentUser.role === 'admin') {
+    if (currentUser.role === 'recepcionista') {
       switch (actualPage) {
         case 'dashboard':
           return <ReceptionistDashboard />;

@@ -7,6 +7,7 @@ export const TriagePage = () => {
   const [triages, setTriages] = useState([]);
   const [patients, setPatients] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [nurses, setNurses] = useState([]);
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -17,6 +18,7 @@ export const TriagePage = () => {
     height: 0,
     riskClassification: 'green',
     observations: '',
+    id_enfer: '',
   });
 
   const fetchData = async () => {
@@ -34,13 +36,15 @@ export const TriagePage = () => {
       const dataAg = await resAgendamentos.json();
       setAppointments(Array.isArray(dataAg) ? dataAg : []);
 
-      const [resPac, resMed] = await Promise.all([
+      const [resPac, resMed, resEnf] = await Promise.all([
         fetch('http://localhost:3001/pacientes', { headers }),
-        fetch('http://localhost:3001/medicos', { headers })
+        fetch('http://localhost:3001/medicos', { headers }),
+        fetch('http://localhost:3001/enfermeiros', { headers })
       ]);
       
       if (resPac.ok) setPatients(await resPac.json());
       if (resMed.ok) setDoctors(await resMed.json());
+      if (resEnf.ok) setNurses(await resEnf.json());
 
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -53,14 +57,12 @@ export const TriagePage = () => {
     fetchData();
   }, []);
 
-  // SEPARAÇÃO INTELIGENTE (Raio-X)
   const pendingTriage = [];
   const completedTriage = [];
 
   appointments.forEach((apt) => {
     const aptId = String(apt._id || apt.id);
     
-    // Procura se já existe triagem para este agendamento
     const triageInfo = triages.find((t) => String(t.id_agen || t.id_agend || t.appointmentId || '') === aptId);
 
     if (triageInfo) {
@@ -72,7 +74,20 @@ export const TriagePage = () => {
 
   const handleOpenTriage = (appointmentId) => {
     setSelectedAppointment(appointmentId);
-    setFormData({ bloodPressure: '', temperature: 36.5, weight: 70, height: 170, riskClassification: 'green', observations: '' });
+    
+    const storedUser = localStorage.getItem('@Clinica:user');
+    const userObj = storedUser ? JSON.parse(storedUser) : null;
+    const defaultNurse = userObj?.role === 'enfermeiro' ? (userObj.id || userObj._id) : '';
+
+    setFormData({ 
+      bloodPressure: '', 
+      temperature: 36.5, 
+      weight: 70, 
+      height: 170, 
+      riskClassification: 'green', 
+      observations: '',
+      id_enfer: defaultNurse
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -83,10 +98,15 @@ export const TriagePage = () => {
     const agendamentoAtual = appointments.find(a => String(a._id || a.id) === String(selectedAppointment));
     const pacienteId = agendamentoAtual ? (agendamentoAtual.id_paci || agendamentoAtual.paciente_id) : null;
 
+    if (!formData.id_enfer) {
+      alert('Por favor, selecione o enfermeiro responsável.');
+      return;
+    }
+
     const payload = {
       id_agen: selectedAppointment,
       id_paci: pacienteId,
-      id_enfer: userObj?.id || userObj?._id,
+      id_enfer: formData.id_enfer,
       sinais_vitais: `PA: ${formData.bloodPressure}, Temp: ${formData.temperature}°C`, 
       altura: formData.height,
       peso: formData.weight,
@@ -117,7 +137,6 @@ export const TriagePage = () => {
     }
   };
 
-  // Helper para formatar data
   const formatData = (dataStr) => {
     if (!dataStr) return '---';
     if (dataStr.includes('-')) {
@@ -156,7 +175,6 @@ export const TriagePage = () => {
         </div>
       </div>
 
-      {/* LISTA 1: AGUARDANDO TRIAGEM */}
       <h2 style={{ fontSize: '1.2rem', color: '#ca8a04', marginBottom: '1rem' }}>🟡 Aguardando Triagem</h2>
       <div className="table-container" style={{ marginBottom: '2rem' }}>
         <table className="table">
@@ -197,7 +215,6 @@ export const TriagePage = () => {
         </table>
       </div>
 
-      {/* LISTA 2: JÁ TRIADOS */}
       {completedTriage.length > 0 && (
         <>
           <h2 style={{ fontSize: '1.2rem', color: '#16a34a', marginBottom: '1rem' }}>✔️ Triagens Finalizadas</h2>
@@ -232,13 +249,26 @@ export const TriagePage = () => {
         </>
       )}
 
-      {/* MODAL MANTIDO IGUAL */}
       {selectedAppointment && (
         <div className="modal-overlay" onClick={() => setSelectedAppointment(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header"><h2 className="modal-title">Realizar Triagem</h2></div>
             <div className="modal-body">
               <form onSubmit={handleSubmit}>
+                <div className="form-group mb-3">
+                  <label className="label">Enfermeiro Responsável</label>
+                  <select 
+                    className="select"
+                    value={formData.id_enfer}
+                    onChange={(e) => setFormData({...formData, id_enfer: e.target.value})}
+                    required
+                  >
+                    <option value="">Selecione o enfermeiro...</option>
+                    {nurses.map(nurse => (
+                      <option key={nurse._id || nurse.id} value={nurse._id || nurse.id}>{nurse.nome}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="form-grid">
                   <div className="form-group">
                     <label className="label">Pressão Arterial</label>
