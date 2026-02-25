@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Activity, AlertCircle, CheckCircle2 } from 'lucide-react';
 import '../../styles/Triage.css';
 
@@ -21,7 +21,7 @@ export const TriagePage = () => {
     id_enfer: '',
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const storedUser = localStorage.getItem('@Clinica:user');
       if (!storedUser) return;
@@ -51,18 +51,17 @@ export const TriagePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const pendingTriage = [];
   const completedTriage = [];
 
   appointments.forEach((apt) => {
     const aptId = String(apt._id || apt.id);
-    
     const triageInfo = triages.find((t) => String(t.id_agen || t.id_agend || t.appointmentId || '') === aptId);
 
     if (triageInfo) {
@@ -99,7 +98,7 @@ export const TriagePage = () => {
     const pacienteId = agendamentoAtual ? (agendamentoAtual.id_paci || agendamentoAtual.paciente_id) : null;
 
     if (!formData.id_enfer) {
-      alert('Por favor, selecione o enfermeiro responsável.');
+      alert('Erro: O enfermeiro responsável não foi identificado.');
       return;
     }
 
@@ -127,7 +126,7 @@ export const TriagePage = () => {
       if (response.ok) {
         alert('Triagem realizada com sucesso!');
         setSelectedAppointment(null);
-        await fetchData(); // Atualiza a tela na hora
+        await fetchData();
       } else {
         const err = await response.json();
         alert(`Erro: ${err.erros ? err.erros.join(', ') : err.erro}`);
@@ -157,21 +156,12 @@ export const TriagePage = () => {
 
       <div className="dashboard-stats" style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
         <div className="card" style={{ flex: 1 }}>
-          <div className="card-header stat-card-header">
-            <h3 className="stat-card-title">Aguardando Triagem</h3>
-          </div>
-          <div className="card-content">
-            <div className="stat-value">{pendingTriage.length}</div>
-          </div>
+          <div className="card-header stat-card-header"><h3 className="stat-card-title">Aguardando Triagem</h3></div>
+          <div className="card-content"><div className="stat-value">{pendingTriage.length}</div></div>
         </div>
-
         <div className="card" style={{ flex: 1 }}>
-          <div className="card-header stat-card-header">
-            <h3 className="stat-card-title">Triagens Finalizadas</h3>
-          </div>
-          <div className="card-content">
-            <div className="stat-value">{completedTriage.length}</div>
-          </div>
+          <div className="card-header stat-card-header"><h3 className="stat-card-title">Triagens Finalizadas</h3></div>
+          <div className="card-content"><div className="stat-value">{completedTriage.length}</div></div>
         </div>
       </div>
 
@@ -179,13 +169,7 @@ export const TriagePage = () => {
       <div className="table-container" style={{ marginBottom: '2rem' }}>
         <table className="table">
           <thead>
-            <tr>
-              <th>Paciente</th>
-              <th>Médico</th>
-              <th>Horário</th>
-              <th>Data</th>
-              <th style={{ textAlign: 'right' }}>Ações</th>
-            </tr>
+            <tr><th>Paciente</th><th>Médico</th><th>Horário</th><th>Data</th><th style={{ textAlign: 'right' }}>Ações</th></tr>
           </thead>
           <tbody>
             {pendingTriage.length === 0 ? (
@@ -198,14 +182,10 @@ export const TriagePage = () => {
 
                 return (
                   <tr key={aptId}>
-                    <td>{patient?.nome || '---'}</td>
-                    <td>{doctor?.nome || '---'}</td>
-                    <td>{apt.horario || '---'}</td>
-                    <td>{formatData(apt.data)}</td>
+                    <td>{patient?.nome || '---'}</td><td>{doctor?.nome || '---'}</td>
+                    <td>{apt.horario || '---'}</td><td>{formatData(apt.data)}</td>
                     <td style={{ textAlign: 'right' }}>
-                      <button className="btn btn-primary btn-sm" onClick={() => handleOpenTriage(aptId)}>
-                        Realizar Triagem
-                      </button>
+                      <button className="btn btn-primary btn-sm" onClick={() => handleOpenTriage(aptId)}>Realizar Triagem</button>
                     </td>
                   </tr>
                 );
@@ -220,25 +200,14 @@ export const TriagePage = () => {
           <h2 style={{ fontSize: '1.2rem', color: '#16a34a', marginBottom: '1rem' }}>✔️ Triagens Finalizadas</h2>
           <div className="table-container opacity-75">
             <table className="table">
-              <thead>
-                <tr>
-                  <th>Paciente</th>
-                  <th>Médico</th>
-                  <th>Horário</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
+              <thead><tr><th>Paciente</th><th>Médico</th><th>Horário</th><th>Status</th></tr></thead>
               <tbody>
                 {completedTriage.map((apt) => {
-                  const aptId = String(apt._id || apt.id);
                   const patient = patients.find((p) => String(p._id || p.id) === String(apt.id_paci || apt.paciente_id));
                   const doctor = doctors.find((d) => String(d._id || d.id) === String(apt.id_medic || apt.medico_id));
-
                   return (
-                    <tr key={aptId}>
-                      <td>{patient?.nome || '---'}</td>
-                      <td>{doctor?.nome || '---'}</td>
-                      <td>{apt.horario || '---'}</td>
+                    <tr key={String(apt._id || apt.id)}>
+                      <td>{patient?.nome || '---'}</td><td>{doctor?.nome || '---'}</td><td>{apt.horario || '---'}</td>
                       <td><span className="badge" style={{ background: '#dcfce7', color: '#16a34a' }}>Pronto para Consulta</span></td>
                     </tr>
                   );
@@ -255,55 +224,40 @@ export const TriagePage = () => {
             <div className="modal-header"><h2 className="modal-title">Realizar Triagem</h2></div>
             <div className="modal-body">
               <form onSubmit={handleSubmit}>
-                <div className="form-group mb-3">
-                  <label className="label">Enfermeiro Responsável</label>
-                  <select 
-                    className="select"
-                    value={formData.id_enfer}
-                    onChange={(e) => setFormData({...formData, id_enfer: e.target.value})}
-                    required
-                  >
-                    <option value="">Selecione o enfermeiro...</option>
-                    {nurses.map(nurse => (
-                      <option key={nurse._id || nurse.id} value={nurse._id || nurse.id}>
-                        {nurse.nome}
-                      </option>
-                    ))}
-                  </select>
-                  {JSON.parse(localStorage.getItem('@Clinica:user'))?.role === 'admin' && (
+                
+                {/* CORREÇÃO: O seletor de enfermeiros agora só aparece para o ADMIN */}
+                {JSON.parse(localStorage.getItem('@Clinica:user'))?.role === 'admin' && (
+                  <div className="form-group mb-3">
+                    <label className="label">Enfermeiro Responsável</label>
+                    <select 
+                      className="select"
+                      value={formData.id_enfer}
+                      onChange={(e) => setFormData({...formData, id_enfer: e.target.value})}
+                      required
+                    >
+                      <option value="">Selecione o enfermeiro...</option>
+                      {nurses.map(nurse => (
+                        <option key={nurse._id || nurse.id} value={nurse._id || nurse.id}>
+                          {nurse.nome}
+                        </option>
+                      ))}
+                    </select>
                     <small style={{ color: '#666' }}>Selecione o enfermeiro que realizou o procedimento.</small>
-                  )}
                   </div>
+                )}
+
                 <div className="form-grid">
-                  <div className="form-group">
-                    <label className="label">Pressão Arterial</label>
-                    <input type="text" className="input" placeholder="120/80" value={formData.bloodPressure} onChange={(e) => setFormData({...formData, bloodPressure: e.target.value})} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="label">Temperatura (°C)</label>
-                    <input type="number" step="0.1" className="input" value={formData.temperature} onChange={(e) => setFormData({...formData, temperature: parseFloat(e.target.value)})} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="label">Peso (kg)</label>
-                    <input type="number" step="0.1" className="input" value={formData.weight} onChange={(e) => setFormData({...formData, weight: parseFloat(e.target.value)})} required />
-                  </div>
-                  <div className="form-group">
-                    <label className="label">Altura (cm)</label>
-                    <input type="number" className="input" value={formData.height} onChange={(e) => setFormData({...formData, height: parseFloat(e.target.value)})} required />
-                  </div>
+                  <div className="form-group"><label className="label">Pressão Arterial</label><input type="text" className="input" placeholder="120/80" value={formData.bloodPressure} onChange={(e) => setFormData({...formData, bloodPressure: e.target.value})} required /></div>
+                  <div className="form-group"><label className="label">Temperatura (°C)</label><input type="number" step="0.1" className="input" value={formData.temperature} onChange={(e) => setFormData({...formData, temperature: parseFloat(e.target.value)})} required /></div>
+                  <div className="form-group"><label className="label">Peso (kg)</label><input type="number" step="0.1" className="input" value={formData.weight} onChange={(e) => setFormData({...formData, weight: parseFloat(e.target.value)})} required /></div>
+                  <div className="form-group"><label className="label">Altura (cm)</label><input type="number" className="input" value={formData.height} onChange={(e) => setFormData({...formData, height: parseFloat(e.target.value)})} required /></div>
                   <div className="form-group">
                     <label className="label">Classificação</label>
                     <select className="select" value={formData.riskClassification} onChange={(e) => setFormData({...formData, riskClassification: e.target.value})} required>
-                      <option value="red">Emergência</option>
-                      <option value="yellow">Urgência</option>
-                      <option value="green">Pouco Urgente</option>
-                      <option value="blue">Não Urgente</option>
+                      <option value="red">Emergência</option><option value="yellow">Urgência</option><option value="green">Pouco Urgente</option><option value="blue">Não Urgente</option>
                     </select>
                   </div>
-                  <div className="form-group form-group-full">
-                    <label className="label">Observações</label>
-                    <textarea className="textarea" value={formData.observations} onChange={(e) => setFormData({...formData, observations: e.target.value})} required />
-                  </div>
+                  <div className="form-group form-group-full"><label className="label">Observações</label><textarea className="textarea" value={formData.observations} onChange={(e) => setFormData({...formData, observations: e.target.value})} required /></div>
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={() => setSelectedAppointment(null)}>Cancelar</button>
